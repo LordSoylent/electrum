@@ -1,4 +1,4 @@
-# Electrum - Lightweight Bitcoin Client
+# Electrum - Lightweight Syscoin Client
 # Copyright (c) 2011-2016 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -40,8 +40,8 @@ import socks
 
 from . import util
 from .util import print_error
-from . import bitcoin
-from .bitcoin import COIN
+from . import syscoin
+from .syscoin import COIN
 from . import constants
 from .interface import Connection, Interface
 from . import blockchain
@@ -1221,7 +1221,7 @@ class Network(util.DaemonThread):
 
     def subscribe_to_addresses(self, addresses, callback):
         hash2address = {
-            bitcoin.address_to_scripthash(address): address
+            syscoin.address_to_scripthash(address): address
             for address in addresses}
         self.h2addr.update(hash2address)
         msgs = [
@@ -1230,7 +1230,7 @@ class Network(util.DaemonThread):
         self.send(msgs, self.map_scripthash_to_address(callback))
 
     def request_address_history(self, address, callback):
-        h = bitcoin.address_to_scripthash(address)
+        h = syscoin.address_to_scripthash(address)
         self.h2addr.update({h: address})
         self.send([('blockchain.scripthash.get_history', [h])], self.map_scripthash_to_address(callback))
 

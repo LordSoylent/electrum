@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2016 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -28,7 +28,7 @@ import sys
 import traceback
 from functools import partial
 
-from . import bitcoin
+from . import syscoin
 from . import keystore
 from .keystore import bip44_derivation, purpose48_derivation
 from .wallet import Imported_Wallet, Standard_Wallet, Multisig_Wallet, wallet_types, Wallet
@@ -100,7 +100,7 @@ class BaseWizard(object):
             ('standard',  _("Standard wallet")),
             ('2fa', _("Wallet with two-factor authentication")),
             ('multisig',  _("Multi-signature wallet")),
-            ('imported',  _("Import Bitcoin addresses or private keys")),
+            ('imported',  _("Import Syscoin addresses or private keys")),
         ]
         choices = [pair for pair in wallet_kinds if pair[0] in wallet_types]
         self.choice_dialog(title=title, message=message, choices=choices, run_next=self.on_wallet_type)
@@ -173,8 +173,8 @@ class BaseWizard(object):
 
     def import_addresses_or_keys(self):
         v = lambda x: keystore.is_address_list(x) or keystore.is_private_key_list(x)
-        title = _("Import Bitcoin Addresses")
-        message = _("Enter a list of Bitcoin addresses (this will create a watching-only wallet), or a list of private keys.")
+        title = _("Import Syscoin Addresses")
+        message = _("Enter a list of Syscoin addresses (this will create a watching-only wallet), or a list of private keys.")
         self.add_xpub_dialog(title=title, message=message, run_next=self.on_import,
                              is_valid=v, allow_multi=True, show_wif_help=True)
 
@@ -333,7 +333,7 @@ class BaseWizard(object):
             try:
                 self.choice_and_line_dialog(
                     run_next=f, title=_('Script type and Derivation path'), message1=message1,
-                    message2=message2, choices=choices, test_text=bitcoin.is_bip32_derivation)
+                    message2=message2, choices=choices, test_text=syscoin.is_bip32_derivation)
                 return
             except ScriptTypeNotSupported as e:
                 self.show_error(e)
@@ -376,12 +376,12 @@ class BaseWizard(object):
     def restore_from_seed(self):
         self.opt_bip39 = True
         self.opt_ext = True
-        is_cosigning_seed = lambda x: bitcoin.seed_type(x) in ['standard', 'segwit']
-        test = bitcoin.is_seed if self.wallet_type == 'standard' else is_cosigning_seed
+        is_cosigning_seed = lambda x: syscoin.seed_type(x) in ['standard', 'segwit']
+        test = syscoin.is_seed if self.wallet_type == 'standard' else is_cosigning_seed
         self.restore_seed_dialog(run_next=self.on_restore_seed, test=test)
 
     def on_restore_seed(self, seed, is_bip39, is_ext):
-        self.seed_type = 'bip39' if is_bip39 else bitcoin.seed_type(seed)
+        self.seed_type = 'bip39' if is_bip39 else syscoin.seed_type(seed)
         if self.seed_type == 'bip39':
             f = lambda passphrase: self.on_restore_bip39(seed, passphrase)
             self.passphrase_dialog(run_next=f, is_restoring=True) if is_ext else f('')
@@ -412,7 +412,7 @@ class BaseWizard(object):
     def on_keystore(self, k):
         has_xpub = isinstance(k, keystore.Xpub)
         if has_xpub:
-            from .bitcoin import xpub_type
+            from .syscoin import xpub_type
             t1 = xpub_type(k.xpub)
         if self.wallet_type == 'standard':
             if has_xpub and t1 not in ['standard', 'p2wpkh', 'p2wpkh-p2sh']:
@@ -519,7 +519,7 @@ class BaseWizard(object):
             _("The type of addresses used by your wallet will depend on your seed."),
             _("Segwit wallets use bech32 addresses, defined in BIP173."),
             _("Please note that websites and other wallets may not support these addresses yet."),
-            _("Thus, you might want to keep using a non-segwit wallet in order to be able to receive bitcoins during the transition period.")
+            _("Thus, you might want to keep using a non-segwit wallet in order to be able to receive syscoins during the transition period.")
         ])
         choices = [
             ('create_standard_seed', _('Standard')),

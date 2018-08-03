@@ -1,4 +1,4 @@
-# Electrum - Lightweight Bitcoin Client
+# Electrum - Lightweight Syscoin Client
 # Copyright (c) 2012 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -24,7 +24,7 @@
 from typing import Sequence, Optional
 
 from .util import ThreadJob, bh2u, VerifiedTxInfo
-from .bitcoin import Hash, hash_decode, hash_encode
+from .syscoin import Hash, hash_decode, hash_encode
 from .transaction import Transaction
 from .blockchain import hash_header
 
@@ -133,9 +133,9 @@ class SPV(ThreadJob):
     @classmethod
     def _raise_if_valid_tx(cls, raw_tx: str):
         # If an inner node of the merkle proof is also a valid tx, chances are, this is an attack.
-        # https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2018-June/016105.html
-        # https://lists.linuxfoundation.org/pipermail/bitcoin-dev/attachments/20180609/9f4f5b1f/attachment-0001.pdf
-        # https://bitcoin.stackexchange.com/questions/76121/how-is-the-leaf-node-weakness-in-merkle-trees-exploitable/76122#76122
+        # https://lists.linuxfoundation.org/pipermail/syscoin-dev/2018-June/016105.html
+        # https://lists.linuxfoundation.org/pipermail/syscoin-dev/attachments/20180609/9f4f5b1f/attachment-0001.pdf
+        # https://syscoin.stackexchange.com/questions/76121/how-is-the-leaf-node-weakness-in-merkle-trees-exploitable/76122#76122
         tx = Transaction(raw_tx)
         try:
             tx.deserialize()

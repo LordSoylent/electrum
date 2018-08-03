@@ -1,4 +1,4 @@
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2011 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -45,13 +45,13 @@ def inv_dict(d):
     return {v: k for k, v in d.items()}
 
 
-base_units = {'BTC':8, 'mBTC':5, 'bits':2, 'sat':0}
+base_units = {'SYS':8, 'mSYS':5, 'bits':2, 'sat':0}
 base_units_inverse = inv_dict(base_units)
-base_units_list = ['BTC', 'mBTC', 'bits', 'sat']  # list(dict) does not guarantee order
+base_units_list = ['SYS', 'mSYS', 'bits', 'sat']  # list(dict) does not guarantee order
 
 
 def decimal_point_to_base_unit_name(dp: int) -> str:
-    # e.g. 8 -> "BTC"
+    # e.g. 8 -> "SYS"
     try:
         return base_units_inverse[dp]
     except KeyError:
@@ -59,7 +59,7 @@ def decimal_point_to_base_unit_name(dp: int) -> str:
 
 
 def base_unit_name_to_decimal_point(unit_name: str) -> int:
-    # e.g. "BTC" -> 8
+    # e.g. "SYS" -> 8
     try:
         return base_units[unit_name]
     except KeyError:
@@ -111,7 +111,7 @@ class TimeoutException(Exception):
 class WalletFileException(Exception): pass
 
 
-class BitcoinException(Exception): pass
+class SyscoinException(Exception): pass
 
 
 # Throw this exception to unwind the stack like when an error occurs.
@@ -132,7 +132,7 @@ class Satoshis(object):
         return 'Satoshis(%d)'%self.value
 
     def __str__(self):
-        return format_satoshis(self.value) + " BTC"
+        return format_satoshis(self.value) + " SYS"
 
 class Fiat(object):
     __slots__ = ('value', 'ccy')
@@ -584,41 +584,15 @@ def time_difference(distance_in_time, include_seconds):
         return "over %d years" % (round(distance_in_minutes / 525600))
 
 mainnet_block_explorers = {
-    'Biteasy.com': ('https://www.biteasy.com/blockchain/',
-                        {'tx': 'transactions/', 'addr': 'addresses/'}),
-    'Bitflyer.jp': ('https://chainflyer.bitflyer.jp/',
-                        {'tx': 'Transaction/', 'addr': 'Address/'}),
-    'Blockchain.info': ('https://blockchain.info/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'blockchainbdgpzk.onion': ('https://blockchainbdgpzk.onion/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'Blockr.io': ('https://btc.blockr.io/',
-                        {'tx': 'tx/info/', 'addr': 'address/info/'}),
-    'Blocktrail.com': ('https://www.blocktrail.com/BTC/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'BTC.com': ('https://chain.btc.com/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'Chain.so': ('https://www.chain.so/',
-                        {'tx': 'tx/BTC/', 'addr': 'address/BTC/'}),
-    'Insight.is': ('https://insight.bitpay.com/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'TradeBlock.com': ('https://tradeblock.com/blockchain/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'BlockCypher.com': ('https://live.blockcypher.com/btc/',
-                        {'tx': 'tx/', 'addr': 'address/'}),
-    'Blockchair.com': ('https://blockchair.com/bitcoin/',
-                        {'tx': 'transaction/', 'addr': 'address/'}),
-    'blockonomics.co': ('https://www.blockonomics.co/',
-                        {'tx': 'api/tx?txid=', 'addr': '#/search?q='}),
-    'OXT.me': ('https://oxt.me/',
-                        {'tx': 'transaction/', 'addr': 'address/'}),
+    'prohashing.com': ('https://prohashing.com/explorer/Syscoin/',
+                        {'tx': '', 'addr': ''}),
+    'coinpayments.net': ('https://explorer.coinpayments.net/index.php?chain=24',
+                        {'tx': 'transaction.php?chain=24&hash=', 'addr': 'address.php?chain=24&addr='}),
     'system default': ('blockchain:/',
                         {'tx': 'tx/', 'addr': 'address/'}),
 }
 
 testnet_block_explorers = {
-    'Blocktrail.com': ('https://www.blocktrail.com/tBTC/',
-                       {'tx': 'tx/', 'addr': 'address/'}),
     'system default': ('blockchain://000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943/',
                        {'tx': 'tx/', 'addr': 'address/'}),
 }
@@ -648,17 +622,17 @@ def block_explorer_URL(config, kind, item):
 #urldecode = lambda x: _ud.sub(lambda m: chr(int(m.group(1), 16)), x)
 
 def parse_URI(uri, on_pr=None):
-    from . import bitcoin
-    from .bitcoin import COIN
+    from . import syscoin
+    from .syscoin import COIN
 
     if ':' not in uri:
-        if not bitcoin.is_address(uri):
-            raise Exception("Not a bitcoin address")
+        if not syscoin.is_address(uri):
+            raise Exception("Not a syscoin address")
         return {'address': uri}
 
     u = urllib.parse.urlparse(uri)
-    if u.scheme != 'bitcoin':
-        raise Exception("Not a bitcoin URI")
+    if u.scheme != 'syscoin':
+        raise Exception("Not a syscoin URI")
     address = u.path
 
     # python for android fails to parse query
@@ -674,8 +648,8 @@ def parse_URI(uri, on_pr=None):
 
     out = {k: v[0] for k, v in pq.items()}
     if address:
-        if not bitcoin.is_address(address):
-            raise Exception("Invalid bitcoin address:" + address)
+        if not syscoin.is_address(address):
+            raise Exception("Invalid syscoin address:" + address)
         out['address'] = address
     if 'amount' in out:
         am = out['amount']
@@ -694,7 +668,7 @@ def parse_URI(uri, on_pr=None):
     if 'exp' in out:
         out['exp'] = int(out['exp'])
     if 'sig' in out:
-        out['sig'] = bh2u(bitcoin.base_decode(out['sig'], None, base=58))
+        out['sig'] = bh2u(syscoin.base_decode(out['sig'], None, base=58))
 
     r = out.get('r')
     sig = out.get('sig')
@@ -717,15 +691,15 @@ def parse_URI(uri, on_pr=None):
 
 
 def create_URI(addr, amount, message):
-    from . import bitcoin
-    if not bitcoin.is_address(addr):
+    from . import syscoin
+    if not syscoin.is_address(addr):
         return ""
     query = []
     if amount:
         query.append('amount=%s'%format_satoshis_plain(amount))
     if message:
         query.append('message=%s'%urllib.parse.quote(message))
-    p = urllib.parse.ParseResult(scheme='bitcoin', netloc='', path=addr, params='', query='&'.join(query), fragment='')
+    p = urllib.parse.ParseResult(scheme='syscoin', netloc='', path=addr, params='', query='&'.join(query), fragment='')
     return urllib.parse.urlunparse(p)
 
 

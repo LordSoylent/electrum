@@ -7,7 +7,7 @@ import traceback
 from decimal import Decimal
 import threading
 
-from electrum.bitcoin import TYPE_ADDRESS
+from electrum.syscoin import TYPE_ADDRESS
 from electrum.storage import WalletStorage
 from electrum.wallet import Wallet
 from electrum.paymentrequest import InvoiceStore
@@ -138,7 +138,7 @@ class ElectrumWindow(App):
         self.send_screen.set_URI(uri)
 
     def on_new_intent(self, intent):
-        if intent.getScheme() != 'bitcoin':
+        if intent.getScheme() != 'syscoin':
             return
         uri = intent.getDataString()
         self.set_URI(uri)
@@ -183,7 +183,7 @@ class ElectrumWindow(App):
     def decimal_point(self):
         return base_units[self.base_unit]
 
-    def btc_to_fiat(self, amount_str):
+    def sys_to_fiat(self, amount_str):
         if not amount_str:
             return ''
         if not self.fx.is_enabled():
@@ -194,7 +194,7 @@ class ElectrumWindow(App):
         fiat_amount = self.get_amount(amount_str + ' ' + self.base_unit) * rate / pow(10, 8)
         return "{:.2f}".format(fiat_amount).rstrip('0').rstrip('.')
 
-    def fiat_to_btc(self, fiat_amount):
+    def fiat_to_sys(self, fiat_amount):
         if not fiat_amount:
             return ''
         rate = self.fx.exchange_rate()
@@ -313,12 +313,12 @@ class ElectrumWindow(App):
             self.send_screen.do_clear()
 
     def on_qr(self, data):
-        from electrum.bitcoin import base_decode, is_address
+        from electrum.syscoin import base_decode, is_address
         data = data.strip()
         if is_address(data):
             self.set_URI(data)
             return
-        if data.startswith('bitcoin:'):
+        if data.startswith('syscoin:'):
             self.set_URI(data)
             return
         # try to decode transaction
@@ -473,7 +473,7 @@ class ElectrumWindow(App):
         self.fiat_unit = self.fx.ccy if self.fx.is_enabled() else ''
         # default tab
         self.switch_to('history')
-        # bind intent for bitcoin: URI scheme
+        # bind intent for syscoin: URI scheme
         if platform == 'android':
             from android import activity
             from jnius import autoclass

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - Lightweight Bitcoin Client
+# Electrum - Lightweight Syscoin Client
 # Copyright (C) 2015 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -31,8 +31,8 @@ import base64
 from urllib.parse import urljoin
 from urllib.parse import quote
 
-from electrum import bitcoin, ecc, constants, keystore, version
-from electrum.bitcoin import *
+from electrum import syscoin, ecc, constants, keystore, version
+from electrum.syscoin import *
 from electrum.transaction import TxOutput
 from electrum.mnemonic import Mnemonic
 from electrum.wallet import Multisig_Wallet, Deterministic_Wallet
@@ -335,7 +335,7 @@ class Wallet_2fa(Multisig_Wallet):
 
 def get_user_id(storage):
     def make_long_id(xpub_hot, xpub_cold):
-        return bitcoin.sha256(''.join(sorted([xpub_hot, xpub_cold])))
+        return syscoin.sha256(''.join(sorted([xpub_hot, xpub_cold])))
     xpub1 = storage.get('x1/')['xpub']
     xpub2 = storage.get('x2/')['xpub']
     long_id = make_long_id(xpub1, xpub2)
@@ -344,15 +344,15 @@ def get_user_id(storage):
 
 def make_xpub(xpub, s):
     version, _, _, _, c, cK = deserialize_xpub(xpub)
-    cK2, c2 = bitcoin._CKD_pub(cK, c, s)
-    return bitcoin.serialize_xpub(version, c2, cK2)
+    cK2, c2 = syscoin._CKD_pub(cK, c, s)
+    return syscoin.serialize_xpub(version, c2, cK2)
 
 def make_billing_address(wallet, num):
     long_id, short_id = wallet.get_user_id()
     xpub = make_xpub(get_billing_xpub(), long_id)
     version, _, _, _, c, cK = deserialize_xpub(xpub)
-    cK, c = bitcoin.CKD_pub(cK, c, num)
-    return bitcoin.public_key_to_p2pkh(cK)
+    cK, c = syscoin.CKD_pub(cK, c, num)
+    return syscoin.public_key_to_p2pkh(cK)
 
 
 class TrustedCoinPlugin(BasePlugin):
@@ -366,7 +366,7 @@ class TrustedCoinPlugin(BasePlugin):
 
     @staticmethod
     def is_valid_seed(seed):
-        return bitcoin.is_new_seed(seed, SEED_PREFIX)
+        return syscoin.is_new_seed(seed, SEED_PREFIX)
 
     def is_available(self):
         return True

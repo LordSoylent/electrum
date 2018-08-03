@@ -4,7 +4,7 @@ import shutil
 import tempfile
 from typing import Sequence
 
-from electrum import storage, bitcoin, keystore, constants
+from electrum import storage, syscoin, keystore, constants
 from electrum import Transaction
 from electrum import SimpleConfig
 from electrum.address_synchronizer import TX_HEIGHT_UNCONFIRMED, TX_HEIGHT_UNCONF_PARENT
@@ -80,7 +80,7 @@ class TestWalletKeystoreAddressIntegrityForMainnet(SequentialTestCase):
     @mock.patch.object(storage.WalletStorage, '_write')
     def test_electrum_seed_standard(self, mock_write):
         seed_words = 'cycle rocket west magnet parrot shuffle foot correct salt library feed song'
-        self.assertEqual(bitcoin.seed_type(seed_words), 'standard')
+        self.assertEqual(syscoin.seed_type(seed_words), 'standard')
 
         ks = keystore.from_seed(seed_words, '', False)
 
@@ -100,7 +100,7 @@ class TestWalletKeystoreAddressIntegrityForMainnet(SequentialTestCase):
     @mock.patch.object(storage.WalletStorage, '_write')
     def test_electrum_seed_segwit(self, mock_write):
         seed_words = 'bitter grass shiver impose acquire brush forget axis eager alone wine silver'
-        self.assertEqual(bitcoin.seed_type(seed_words), 'segwit')
+        self.assertEqual(syscoin.seed_type(seed_words), 'segwit')
 
         ks = keystore.from_seed(seed_words, '', False)
 
@@ -120,7 +120,7 @@ class TestWalletKeystoreAddressIntegrityForMainnet(SequentialTestCase):
     @mock.patch.object(storage.WalletStorage, '_write')
     def test_electrum_seed_segwit_passphrase(self, mock_write):
         seed_words = 'bitter grass shiver impose acquire brush forget axis eager alone wine silver'
-        self.assertEqual(bitcoin.seed_type(seed_words), 'segwit')
+        self.assertEqual(syscoin.seed_type(seed_words), 'segwit')
 
         ks = keystore.from_seed(seed_words, UNICODE_HORROR, False)
 
@@ -140,7 +140,7 @@ class TestWalletKeystoreAddressIntegrityForMainnet(SequentialTestCase):
     @mock.patch.object(storage.WalletStorage, '_write')
     def test_electrum_seed_old(self, mock_write):
         seed_words = 'powerful random nobody notice nothing important anyway look away hidden message over'
-        self.assertEqual(bitcoin.seed_type(seed_words), 'old')
+        self.assertEqual(syscoin.seed_type(seed_words), 'old')
 
         ks = keystore.from_seed(seed_words, '', False)
 
@@ -159,7 +159,7 @@ class TestWalletKeystoreAddressIntegrityForMainnet(SequentialTestCase):
     @mock.patch.object(storage.WalletStorage, '_write')
     def test_electrum_seed_2fa(self, mock_write):
         seed_words = 'kiss live scene rude gate step hip quarter bunker oxygen motor glove'
-        self.assertEqual(bitcoin.seed_type(seed_words), '2fa')
+        self.assertEqual(syscoin.seed_type(seed_words), '2fa')
 
         xprv1, xpub1, xprv2, xpub2 = trustedcoin.TrustedCoinPlugin.xkeys_from_seed(seed_words, '')
 
@@ -270,7 +270,7 @@ class TestWalletKeystoreAddressIntegrityForMainnet(SequentialTestCase):
     @mock.patch.object(storage.WalletStorage, '_write')
     def test_electrum_multisig_seed_standard(self, mock_write):
         seed_words = 'blast uniform dragon fiscal ensure vast young utility dinosaur abandon rookie sure'
-        self.assertEqual(bitcoin.seed_type(seed_words), 'standard')
+        self.assertEqual(syscoin.seed_type(seed_words), 'standard')
 
         ks1 = keystore.from_seed(seed_words, '', True)
         WalletIntegrityHelper.check_seeded_keystore_sanity(self, ks1)
@@ -293,7 +293,7 @@ class TestWalletKeystoreAddressIntegrityForMainnet(SequentialTestCase):
     @mock.patch.object(storage.WalletStorage, '_write')
     def test_electrum_multisig_seed_segwit(self, mock_write):
         seed_words = 'snow nest raise royal more walk demise rotate smooth spirit canyon gun'
-        self.assertEqual(bitcoin.seed_type(seed_words), 'segwit')
+        self.assertEqual(syscoin.seed_type(seed_words), 'segwit')
 
         ks1 = keystore.from_seed(seed_words, '', True)
         WalletIntegrityHelper.check_seeded_keystore_sanity(self, ks1)
@@ -533,7 +533,7 @@ class TestWalletSending(TestCaseForTestnet):
         wallet1.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # wallet1 -> wallet2
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, wallet2.get_receiving_address(), 250000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, wallet2.get_receiving_address(), 250000)]
         tx = wallet1.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
 
         self.assertTrue(tx.is_complete())
@@ -553,7 +553,7 @@ class TestWalletSending(TestCaseForTestnet):
         wallet2.receive_tx_callback(tx.txid(), tx, TX_HEIGHT_UNCONFIRMED)
 
         # wallet2 -> wallet1
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, wallet1.get_receiving_address(), 100000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, wallet1.get_receiving_address(), 100000)]
         tx = wallet2.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
 
         self.assertTrue(tx.is_complete())
@@ -606,7 +606,7 @@ class TestWalletSending(TestCaseForTestnet):
         wallet1a.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # wallet1 -> wallet2
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, wallet2.get_receiving_address(), 370000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, wallet2.get_receiving_address(), 370000)]
         tx = wallet1a.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         tx = Transaction(tx.serialize())  # simulates moving partial txn between cosigners
         self.assertFalse(tx.is_complete())
@@ -629,7 +629,7 @@ class TestWalletSending(TestCaseForTestnet):
         wallet2.receive_tx_callback(tx.txid(), tx, TX_HEIGHT_UNCONFIRMED)
 
         # wallet2 -> wallet1
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, wallet1a.get_receiving_address(), 100000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, wallet1a.get_receiving_address(), 100000)]
         tx = wallet2.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
 
         self.assertTrue(tx.is_complete())
@@ -697,7 +697,7 @@ class TestWalletSending(TestCaseForTestnet):
         wallet1a.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # wallet1 -> wallet2
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, wallet2a.get_receiving_address(), 165000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, wallet2a.get_receiving_address(), 165000)]
         tx = wallet1a.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         txid = tx.txid()
         tx = Transaction(tx.serialize())  # simulates moving partial txn between cosigners
@@ -723,7 +723,7 @@ class TestWalletSending(TestCaseForTestnet):
         wallet2a.receive_tx_callback(tx.txid(), tx, TX_HEIGHT_UNCONFIRMED)
 
         # wallet2 -> wallet1
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, wallet1a.get_receiving_address(), 100000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, wallet1a.get_receiving_address(), 100000)]
         tx = wallet2a.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         txid = tx.txid()
         tx = Transaction(tx.serialize())  # simulates moving partial txn between cosigners
@@ -777,7 +777,7 @@ class TestWalletSending(TestCaseForTestnet):
         wallet1a.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # wallet1 -> wallet2
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, wallet2.get_receiving_address(), 1000000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, wallet2.get_receiving_address(), 1000000)]
         tx = wallet1a.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
 
         self.assertTrue(tx.is_complete())
@@ -797,7 +797,7 @@ class TestWalletSending(TestCaseForTestnet):
         wallet2.receive_tx_callback(tx.txid(), tx, TX_HEIGHT_UNCONFIRMED)
 
         # wallet2 -> wallet1
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, wallet1a.get_receiving_address(), 300000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, wallet1a.get_receiving_address(), 300000)]
         tx = wallet2.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
 
         self.assertTrue(tx.is_complete())
@@ -833,7 +833,7 @@ class TestWalletSending(TestCaseForTestnet):
         wallet.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # create tx
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, '2N1VTMMFb91SH9SNRAkT7z8otP5eZEct4KL', 2500000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, '2N1VTMMFb91SH9SNRAkT7z8otP5eZEct4KL', 2500000)]
         coins = wallet.get_spendable_coins(domain=None, config=self.config)
         tx = wallet.make_unsigned_transaction(coins, outputs, config=self.config, fixed_fee=5000)
         tx.set_rbf(True)
@@ -919,7 +919,7 @@ class TestWalletSending(TestCaseForTestnet):
         wallet.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # create tx
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, '2N1VTMMFb91SH9SNRAkT7z8otP5eZEct4KL', 2500000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, '2N1VTMMFb91SH9SNRAkT7z8otP5eZEct4KL', 2500000)]
         coins = wallet.get_spendable_coins(domain=None, config=self.config)
         tx = wallet.make_unsigned_transaction(coins, outputs, config=self.config, fixed_fee=5000)
         tx.set_rbf(True)
@@ -1049,7 +1049,7 @@ class TestWalletOfflineSigning(TestCaseForTestnet):
         wallet_online.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # create unsigned tx
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, 'tb1qp0mv2sxsyxxfj5gl0332f9uyez93su9cf26757', 2500000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, 'tb1qp0mv2sxsyxxfj5gl0332f9uyez93su9cf26757', 2500000)]
         tx = wallet_online.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         tx.set_rbf(True)
         tx.locktime = 1325340
@@ -1089,7 +1089,7 @@ class TestWalletOfflineSigning(TestCaseForTestnet):
         wallet_online.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # create unsigned tx
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, 'tb1qp0mv2sxsyxxfj5gl0332f9uyez93su9cf26757', 2500000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, 'tb1qp0mv2sxsyxxfj5gl0332f9uyez93su9cf26757', 2500000)]
         tx = wallet_online.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         tx.set_rbf(True)
         tx.locktime = 1325341
@@ -1130,7 +1130,7 @@ class TestWalletOfflineSigning(TestCaseForTestnet):
         wallet_online.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # create unsigned tx
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, 'tb1qp0mv2sxsyxxfj5gl0332f9uyez93su9cf26757', 2500000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, 'tb1qp0mv2sxsyxxfj5gl0332f9uyez93su9cf26757', 2500000)]
         tx = wallet_online.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         tx.set_rbf(True)
         tx.locktime = 1325341
@@ -1166,7 +1166,7 @@ class TestWalletOfflineSigning(TestCaseForTestnet):
         wallet_online.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # create unsigned tx
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, 'tb1quk7ahlhr3qmjndy0uvu9y9hxfesrtahtta9ghm', 2500000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, 'tb1quk7ahlhr3qmjndy0uvu9y9hxfesrtahtta9ghm', 2500000)]
         tx = wallet_online.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         tx.set_rbf(True)
         tx.locktime = 1325340
@@ -1200,7 +1200,7 @@ class TestWalletOfflineSigning(TestCaseForTestnet):
         wallet_online.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # create unsigned tx
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, 'tb1quk7ahlhr3qmjndy0uvu9y9hxfesrtahtta9ghm', 2500000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, 'tb1quk7ahlhr3qmjndy0uvu9y9hxfesrtahtta9ghm', 2500000)]
         tx = wallet_online.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         tx.set_rbf(True)
         tx.locktime = 1325340
@@ -1234,7 +1234,7 @@ class TestWalletOfflineSigning(TestCaseForTestnet):
         wallet_online.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # create unsigned tx
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, 'tb1quk7ahlhr3qmjndy0uvu9y9hxfesrtahtta9ghm', 2500000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, 'tb1quk7ahlhr3qmjndy0uvu9y9hxfesrtahtta9ghm', 2500000)]
         tx = wallet_online.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         tx.set_rbf(True)
         tx.locktime = 1325340
@@ -1271,7 +1271,7 @@ class TestWalletOfflineSigning(TestCaseForTestnet):
         wallet_online.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # create unsigned tx
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, 'tb1quk7ahlhr3qmjndy0uvu9y9hxfesrtahtta9ghm', 2500000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, 'tb1quk7ahlhr3qmjndy0uvu9y9hxfesrtahtta9ghm', 2500000)]
         tx = wallet_online.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         tx.set_rbf(True)
         tx.locktime = 1325340
@@ -1308,7 +1308,7 @@ class TestWalletOfflineSigning(TestCaseForTestnet):
         wallet_online.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # create unsigned tx
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, 'tb1quk7ahlhr3qmjndy0uvu9y9hxfesrtahtta9ghm', 2500000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, 'tb1quk7ahlhr3qmjndy0uvu9y9hxfesrtahtta9ghm', 2500000)]
         tx = wallet_online.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         tx.set_rbf(True)
         tx.locktime = 1325340
@@ -1345,7 +1345,7 @@ class TestWalletOfflineSigning(TestCaseForTestnet):
         wallet_online.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # create unsigned tx
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, 'tb1quk7ahlhr3qmjndy0uvu9y9hxfesrtahtta9ghm', 2500000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, 'tb1quk7ahlhr3qmjndy0uvu9y9hxfesrtahtta9ghm', 2500000)]
         tx = wallet_online.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         tx.set_rbf(True)
         tx.locktime = 1325340
@@ -1394,7 +1394,7 @@ class TestWalletOfflineSigning(TestCaseForTestnet):
         wallet_online.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # create unsigned tx
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, '2MuCQQHJNnrXzQzuqfUCfAwAjPqpyEHbgue', 2500000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, '2MuCQQHJNnrXzQzuqfUCfAwAjPqpyEHbgue', 2500000)]
         tx = wallet_online.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         tx.set_rbf(True)
         tx.locktime = 1325503
@@ -1451,7 +1451,7 @@ class TestWalletOfflineSigning(TestCaseForTestnet):
         wallet_online.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # create unsigned tx
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, '2N8CtJRwxb2GCaiWWdSHLZHHLoZy53CCyxf', 2500000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, '2N8CtJRwxb2GCaiWWdSHLZHHLoZy53CCyxf', 2500000)]
         tx = wallet_online.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         tx.set_rbf(True)
         tx.locktime = 1325504
@@ -1510,7 +1510,7 @@ class TestWalletOfflineSigning(TestCaseForTestnet):
         wallet_online.receive_tx_callback(funding_txid, funding_tx, TX_HEIGHT_UNCONFIRMED)
 
         # create unsigned tx
-        outputs = [TxOutput(bitcoin.TYPE_ADDRESS, '2MyoZVy8T1t94yLmyKu8DP1SmbWvnxbkwRA', 2500000)]
+        outputs = [TxOutput(syscoin.TYPE_ADDRESS, '2MyoZVy8T1t94yLmyKu8DP1SmbWvnxbkwRA', 2500000)]
         tx = wallet_online.mktx(outputs=outputs, password=None, config=self.config, fee=5000)
         tx.set_rbf(True)
         tx.locktime = 1325505

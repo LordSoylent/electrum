@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2012 thomasv@gitorious
 #
 # Permission is hereby granted, free of charge, to any person
@@ -39,9 +39,9 @@ import PyQt5.QtCore as QtCore
 from .exception_window import Exception_Hook
 from PyQt5.QtWidgets import *
 
-from electrum import (keystore, simple_config, ecc, constants, util, bitcoin, commands,
+from electrum import (keystore, simple_config, ecc, constants, util, syscoin, commands,
                       coinchooser, paymentrequest)
-from electrum.bitcoin import COIN, is_address, TYPE_ADDRESS
+from electrum.syscoin import COIN, is_address, TYPE_ADDRESS
 from electrum.plugin import run_hook
 from electrum.i18n import _
 from electrum.util import (format_time, format_satoshis, format_fee_satoshis,
@@ -54,7 +54,7 @@ from electrum.transaction import Transaction, TxOutput
 from electrum.address_synchronizer import AddTransactionException
 from electrum.wallet import Multisig_Wallet, CannotBumpFee
 
-from .amountedit import AmountEdit, BTCAmountEdit, MyLineEdit, FeerateEdit
+from .amountedit import AmountEdit, SYSAmountEdit, MyLineEdit, FeerateEdit
 from .qrcodewidget import QRCodeWidget, QRDialog
 from .qrtextedit import ShowQRTextEdit, ScanQRTextEdit
 from .transaction_dialog import show_transaction
@@ -397,8 +397,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         if self.wallet.is_watching_only():
             msg = ' '.join([
                 _("This wallet is watching-only."),
-                _("This means you will not be able to spend Bitcoins with it."),
-                _("Make sure you own the seed phrase or the private keys, before you request Bitcoins to be sent to this wallet.")
+                _("This means you will not be able to spend Syscoins with it."),
+                _("Make sure you own the seed phrase or the private keys, before you request Syscoins to be sent to this wallet.")
             ])
             self.show_warning(msg, title=_('Information'))
 
@@ -545,7 +545,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         help_menu = menubar.addMenu(_("&Help"))
         help_menu.addAction(_("&About"), self.show_about)
-        help_menu.addAction(_("&Official website"), lambda: webbrowser.open("https://electrum.org"))
+        help_menu.addAction(_("&Official website"), lambda: webbrowser.open("https://syscoin.org"))
         help_menu.addSeparator()
         help_menu.addAction(_("&Documentation"), lambda: webbrowser.open("http://docs.electrum.org/")).setShortcut(QKeySequence.HelpContents)
         help_menu.addAction(_("&Report Bug"), self.show_report_bug)
@@ -558,24 +558,24 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         d = self.network.get_donation_address()
         if d:
             host = self.network.get_parameters()[0]
-            self.pay_to_URI('bitcoin:%s?message=donation for %s'%(d, host))
+            self.pay_to_URI('syscoin:%s?message=donation for %s'%(d, host))
         else:
             self.show_error(_('No donation address for this server'))
 
     def show_about(self):
         QMessageBox.about(self, "Electrum",
                           (_("Version")+" %s" % self.wallet.electrum_version + "\n\n" +
-                           _("Electrum's focus is speed, with low resource usage and simplifying Bitcoin.") + " " +
+                           _("Electrum's focus is speed, with low resource usage and simplifying Syscoin.") + " " +
                            _("You do not need to perform regular backups, because your wallet can be "
                               "recovered from a secret phrase that you can memorize or write on paper.") + " " +
                            _("Startup times are instant because it operates in conjunction with high-performance "
-                              "servers that handle the most complicated parts of the Bitcoin system.") + "\n\n" +
+                              "servers that handle the most complicated parts of the Syscoin system.") + "\n\n" +
                            _("Uses icons from the Icons8 icon pack (icons8.com).")))
 
     def show_report_bug(self):
         msg = ' '.join([
             _("Please report any bugs as issues on github:<br/>"),
-            "<a href=\"https://github.com/spesmilo/electrum/issues\">https://github.com/spesmilo/electrum/issues</a><br/><br/>",
+            "<a href=\"https://github.com/syscoin/electrum/issues\">https://github.com/syscoin/electrum/issues</a><br/><br/>",
             _("Before reporting a bug, upgrade to the most recent version of Electrum (latest release or git HEAD), and include the version number in your report."),
             _("Try to explain not only what the bug is, but how it occurs.")
          ])
@@ -666,7 +666,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def base_unit(self):
         return decimal_point_to_base_unit_name(self.decimal_point)
 
-    def connect_fields(self, window, btc_e, fiat_e, fee_e):
+    def connect_fields(self, window, sys_e, fiat_e, fee_e):
 
         def edit_changed(edit):
             if edit.follows:
@@ -677,17 +677,17 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             rate = self.fx.exchange_rate() if self.fx else Decimal('NaN')
             if rate.is_nan() or amount is None:
                 if edit is fiat_e:
-                    btc_e.setText("")
+                    sys_e.setText("")
                     if fee_e:
                         fee_e.setText("")
                 else:
                     fiat_e.setText("")
             else:
                 if edit is fiat_e:
-                    btc_e.follows = True
-                    btc_e.setAmount(int(amount / Decimal(rate) * COIN))
-                    btc_e.setStyleSheet(ColorScheme.BLUE.as_stylesheet())
-                    btc_e.follows = False
+                    sys_e.follows = True
+                    sys_e.setAmount(int(amount / Decimal(rate) * COIN))
+                    sys_e.setStyleSheet(ColorScheme.BLUE.as_stylesheet())
+                    sys_e.follows = False
                     if fee_e:
                         window.update_fee()
                 else:
@@ -697,10 +697,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                     fiat_e.setStyleSheet(ColorScheme.BLUE.as_stylesheet())
                     fiat_e.follows = False
 
-        btc_e.follows = False
+        sys_e.follows = False
         fiat_e.follows = False
         fiat_e.textChanged.connect(partial(edit_changed, fiat_e))
-        btc_e.textChanged.connect(partial(edit_changed, btc_e))
+        sys_e.textChanged.connect(partial(edit_changed, sys_e))
         fiat_e.is_last_edited = False
 
     def update_status(self):
@@ -793,7 +793,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.receive_address_e = ButtonsLineEdit()
         self.receive_address_e.addCopyButton(self.app)
         self.receive_address_e.setReadOnly(True)
-        msg = _('Bitcoin address where the payment should be received. Note that each payment request uses a different Bitcoin address.')
+        msg = _('Syscoin address where the payment should be received. Note that each payment request uses a different Syscoin address.')
         self.receive_address_label = HelpLabel(_('Receiving address'), msg)
         self.receive_address_e.textChanged.connect(self.update_receive_qr)
         self.receive_address_e.setFocusPolicy(Qt.ClickFocus)
@@ -805,7 +805,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         grid.addWidget(self.receive_message_e, 1, 1, 1, -1)
         self.receive_message_e.textChanged.connect(self.update_receive_qr)
 
-        self.receive_amount_e = BTCAmountEdit(self.get_decimal_point)
+        self.receive_amount_e = SYSAmountEdit(self.get_decimal_point)
         grid.addWidget(QLabel(_('Requested amount')), 2, 0)
         grid.addWidget(self.receive_amount_e, 2, 1)
         self.receive_amount_e.textChanged.connect(self.update_receive_qr)
@@ -823,8 +823,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         msg = ' '.join([
             _('Expiration date of your request.'),
             _('This information is seen by the recipient if you send them a signed payment request.'),
-            _('Expired requests have to be deleted manually from your list, in order to free the corresponding Bitcoin addresses.'),
-            _('The bitcoin address never expires and will always be part of this electrum wallet.'),
+            _('Expired requests have to be deleted manually from your list, in order to free the corresponding Syscoin addresses.'),
+            _('The syscoin address never expires and will always be part of this electrum wallet.'),
         ])
         grid.addWidget(HelpLabel(_('Request expires'), msg), 3, 0)
         grid.addWidget(self.expires_combo, 3, 1)
@@ -893,7 +893,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             URI += "&exp=%d"%req.get('exp')
         if req.get('name') and req.get('sig'):
             sig = bfh(req.get('sig'))
-            sig = bitcoin.base_encode(sig, base=58)
+            sig = syscoin.base_encode(sig, base=58)
             URI += "&name=" + req['name'] + "&sig="+sig
         return str(URI)
 
@@ -1019,7 +1019,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.tabs.setCurrentIndex(self.tabs.indexOf(self.receive_tab))
 
     def receive_at(self, addr):
-        if not bitcoin.is_address(addr):
+        if not syscoin.is_address(addr):
             return
         self.show_receive_tab()
         self.receive_address_e.setText(addr)
@@ -1047,10 +1047,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         grid.setColumnStretch(3, 1)
 
         from .paytoedit import PayToEdit
-        self.amount_e = BTCAmountEdit(self.get_decimal_point)
+        self.amount_e = SYSAmountEdit(self.get_decimal_point)
         self.payto_e = PayToEdit(self)
         msg = _('Recipient of the funds.') + '\n\n'\
-              + _('You may enter a Bitcoin address, a label from your list of contacts (a list of completions will be proposed), or an alias (email-like address that forwards to a Bitcoin address)')
+              + _('You may enter a Syscoin address, a label from your list of contacts (a list of completions will be proposed), or an alias (email-like address that forwards to a Syscoin address)')
         payto_label = HelpLabel(_('Pay to'), msg)
         grid.addWidget(payto_label, 1, 0)
         grid.addWidget(self.payto_e, 1, 1, 1, -1)
@@ -1097,7 +1097,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         hbox.addStretch(1)
         grid.addLayout(hbox, 4, 4)
 
-        msg = _('Bitcoin transactions are in general not free. A transaction fee is paid by the sender of the funds.') + '\n\n'\
+        msg = _('Syscoin transactions are in general not free. A transaction fee is paid by the sender of the funds.') + '\n\n'\
               + _('The amount of fee can be decided freely by the sender. However, transactions with low fees take more time to be processed.') + '\n\n'\
               + _('A suggested fee is automatically added to this field. You may override it. The suggested fee increases with the size of the transaction.')
         self.fee_e_label = HelpLabel(_('Fee'), msg)
@@ -1153,7 +1153,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         self.feerate_e.textEdited.connect(partial(on_fee_or_feerate, self.feerate_e, False))
         self.feerate_e.editingFinished.connect(partial(on_fee_or_feerate, self.feerate_e, True))
 
-        self.fee_e = BTCAmountEdit(self.get_decimal_point)
+        self.fee_e = SYSAmountEdit(self.get_decimal_point)
         self.fee_e.textEdited.connect(partial(on_fee_or_feerate, self.fee_e, False))
         self.fee_e.editingFinished.connect(partial(on_fee_or_feerate, self.fee_e, True))
 
@@ -1487,10 +1487,10 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         for o in outputs:
             if o.address is None:
-                self.show_error(_('Bitcoin Address is None'))
+                self.show_error(_('Syscoin Address is None'))
                 return
-            if o.type == TYPE_ADDRESS and not bitcoin.is_address(o.address):
-                self.show_error(_('Invalid Bitcoin Address'))
+            if o.type == TYPE_ADDRESS and not syscoin.is_address(o.address):
+                self.show_error(_('Invalid Syscoin Address'))
                 return
             if o.value is None:
                 self.show_error(_('Invalid Amount'))
@@ -1708,7 +1708,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         try:
             out = util.parse_URI(URI, self.on_pr)
         except BaseException as e:
-            self.show_error(_('Invalid bitcoin URI:') + '\n' + str(e))
+            self.show_error(_('Invalid syscoin URI:') + '\n' + str(e))
             return
         self.show_send_tab()
         r = out.get('r')
@@ -1916,7 +1916,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
                                  'network' : self.network,
                                  'plugins' : self.gui_object.plugins,
                                  'window': self})
-        console.updateNamespace({'util' : util, 'bitcoin':bitcoin})
+        console.updateNamespace({'util' : util, 'syscoin':syscoin})
 
         c = commands.Commands(self.config, self.wallet, self.network, lambda: self.console.set_json(True))
         methods = {}
@@ -2126,7 +2126,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             traceback.print_exc(file=sys.stdout)
             self.show_message(str(e))
             return
-        xtype = bitcoin.deserialize_privkey(pk)[0]
+        xtype = syscoin.deserialize_privkey(pk)[0]
         d = WindowModalDialog(self, _("Private key"))
         d.setMinimumSize(600, 150)
         vbox = QVBoxLayout()
@@ -2155,8 +2155,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def do_sign(self, address, message, signature, password):
         address  = address.text().strip()
         message = message.toPlainText().strip()
-        if not bitcoin.is_address(address):
-            self.show_message(_('Invalid Bitcoin address.'))
+        if not syscoin.is_address(address):
+            self.show_message(_('Invalid Syscoin address.'))
             return
         if self.wallet.is_watching_only():
             self.show_message(_('This is a watching-only wallet.'))
@@ -2183,8 +2183,8 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
     def do_verify(self, address, message, signature):
         address  = address.text().strip()
         message = message.toPlainText().strip().encode('utf-8')
-        if not bitcoin.is_address(address):
-            self.show_message(_('Invalid Bitcoin address.'))
+        if not syscoin.is_address(address):
+            self.show_message(_('Invalid Syscoin address.'))
             return
         try:
             # This can throw on invalid base64
@@ -2326,13 +2326,13 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             return
         if not data:
             return
-        # if the user scanned a bitcoin URI
-        if str(data).startswith("bitcoin:"):
+        # if the user scanned a syscoin URI
+        if str(data).startswith("syscoin:"):
             self.pay_to_URI(data)
             return
         # else if the user scanned an offline signed tx
         try:
-            data = bh2u(bitcoin.base_decode(data, length=None, base=43))
+            data = bh2u(syscoin.base_decode(data, length=None, base=43))
         except BaseException as e:
             self.show_error((_('Could not decode QR code')+':\n{}').format(e))
             return
@@ -2532,7 +2532,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         def get_address():
             addr = str(address_e.text()).strip()
-            if bitcoin.is_address(addr):
+            if syscoin.is_address(addr):
                 return addr
 
         def get_pk():
@@ -2746,7 +2746,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
 
         units = base_units_list
         msg = (_('Base unit of your wallet.')
-               + '\n1 BTC = 1000 mBTC. 1 mBTC = 1000 bits. 1 bit = 100 sat.\n'
+               + '\n1 SYS = 1000 mSYS. 1 mSYS = 1000 bits. 1 bit = 100 sat.\n'
                + _('This setting affects the Send tab, and all balance related fields.'))
         unit_label = HelpLabel(_('Base unit') + ':', msg)
         unit_combo = QComboBox()
@@ -3130,7 +3130,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         output_amount = QLabel('')
         grid.addWidget(QLabel(_('Output amount') + ':'), 2, 0)
         grid.addWidget(output_amount, 2, 1)
-        fee_e = BTCAmountEdit(self.get_decimal_point)
+        fee_e = SYSAmountEdit(self.get_decimal_point)
         # FIXME with dyn fees, without estimates, there are all kinds of crashes here
         def f(x):
             a = max_fee - fee_e.get_amount()
@@ -3171,7 +3171,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
         vbox.addWidget(QLabel(_('Current fee') + ': %s'% self.format_amount(fee) + ' ' + self.base_unit()))
         vbox.addWidget(QLabel(_('New fee' + ':')))
 
-        fee_e = BTCAmountEdit(self.get_decimal_point)
+        fee_e = SYSAmountEdit(self.get_decimal_point)
         fee_e.setAmount(fee * 1.5)
         vbox.addWidget(fee_e)
 

@@ -2,17 +2,17 @@
 
 import sys
 import time
-from electrum import bitcoin
+from electrum import syscoin
 from .. import SimpleConfig, Network
 from electrum.util import print_msg, json_encode
 
 try:
     addr = sys.argv[1]
 except Exception:
-    print("usage: watch_address <bitcoin_address>")
+    print("usage: watch_address <syscoin_address>")
     sys.exit(1)
 
-sh = bitcoin.address_to_scripthash(addr)
+sh = syscoin.address_to_scripthash(addr)
 
 # start network
 c = SimpleConfig()

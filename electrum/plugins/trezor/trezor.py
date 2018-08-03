@@ -3,7 +3,7 @@ import traceback
 import sys
 
 from electrum.util import bfh, bh2u, versiontuple, UserCancelled
-from electrum.bitcoin import (b58_address_to_hash160, xpub_from_pubkey, deserialize_xpub,
+from electrum.syscoin import (b58_address_to_hash160, xpub_from_pubkey, deserialize_xpub,
                               TYPE_ADDRESS, TYPE_SCRIPT, is_address)
 from electrum import constants
 from electrum.i18n import _
@@ -176,7 +176,7 @@ class TrezorPlugin(HW_PluginBase):
         return client
 
     def get_coin_name(self):
-        return "Testnet" if constants.net.TESTNET else "Bitcoin"
+        return "Testnet" if constants.net.TESTNET else "Syscoin"
 
     def initialize_device(self, device_id, wizard, handler):
         # Initialization method

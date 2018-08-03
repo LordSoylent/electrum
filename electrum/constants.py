@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2018 The Electrum developers
 #
 # Permission is hereby granted, free of charge, to any person
@@ -37,14 +37,14 @@ def read_json(filename, default):
     return r
 
 
-class BitcoinMainnet:
+class SyscoinMainnet:
 
     TESTNET = False
     WIF_PREFIX = 0x80
-    ADDRTYPE_P2PKH = 0
+    ADDRTYPE_P2PKH = 63
     ADDRTYPE_P2SH = 5
     SEGWIT_HRP = "bc"
-    GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+    GENESIS = "000006e5c08d6d2414435b294210266753b05a75f90e926dd5e6082306812622"
     DEFAULT_PORTS = {'t': '50001', 's': '50002'}
     DEFAULT_SERVERS = read_json('servers.json', {})
     CHECKPOINTS = read_json('checkpoints.json', [])
@@ -63,17 +63,17 @@ class BitcoinMainnet:
         'p2wpkh':      0x04b24746,  # zpub
         'p2wsh':       0x02aa7ed3,  # Zpub
     }
-    BIP44_COIN_TYPE = 0
+    BIP44_COIN_TYPE = 57
 
 
-class BitcoinTestnet:
+class SyscoinTestnet:
 
     TESTNET = True
     WIF_PREFIX = 0xef
-    ADDRTYPE_P2PKH = 111
+    ADDRTYPE_P2PKH = 65
     ADDRTYPE_P2SH = 196
     SEGWIT_HRP = "tb"
-    GENESIS = "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
+    GENESIS = "00000478aace753a4709f7503b5b583456a5a8635e989d7f899eb000bbea9fd4"
     DEFAULT_PORTS = {'t': '51001', 's': '51002'}
     DEFAULT_SERVERS = read_json('servers_testnet.json', {})
     CHECKPOINTS = read_json('checkpoints_testnet.json', [])
@@ -95,39 +95,39 @@ class BitcoinTestnet:
     BIP44_COIN_TYPE = 1
 
 
-class BitcoinRegtest(BitcoinTestnet):
+class SyscoinRegtest(SyscoinTestnet):
 
     SEGWIT_HRP = "bcrt"
-    GENESIS = "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
+    GENESIS = "0000140aa52b536eed2f54cb9590a959672c131bb5de1d934024d6c25c64df4f"
     DEFAULT_SERVERS = read_json('servers_regtest.json', {})
     CHECKPOINTS = []
 
 
-class BitcoinSimnet(BitcoinTestnet):
+class SyscoinSimnet(SyscoinTestnet):
 
     SEGWIT_HRP = "sb"
-    GENESIS = "683e86bd5c6d110d91b94b97137ba6bfe02dbbdb8e3dff722a669b5d69d77af6"
+    GENESIS = "0000140aa52b536eed2f54cb9590a959672c131bb5de1d934024d6c25c64df4f"
     DEFAULT_SERVERS = read_json('servers_regtest.json', {})
     CHECKPOINTS = []
 
 
 # don't import net directly, import the module instead (so that net is singleton)
-net = BitcoinMainnet
+net = SyscoinMainnet
 
 def set_simnet():
     global net
-    net = BitcoinSimnet
+    net = SyscoinSimnet
 
 def set_mainnet():
     global net
-    net = BitcoinMainnet
+    net = SyscoinMainnet
 
 
 def set_testnet():
     global net
-    net = BitcoinTestnet
+    net = SyscoinTestnet
 
 
 def set_regtest():
     global net
-    net = BitcoinRegtest
+    net = SyscoinRegtest

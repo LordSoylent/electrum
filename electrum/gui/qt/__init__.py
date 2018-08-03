@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2012 thomasv@gitorious
 #
 # Permission is hereby granted, free of charge, to any person
@@ -46,7 +46,7 @@ from electrum.base_wizard import GoBack
 # from electrum.verifier import SPV
 # from electrum.util import DebugMem
 from electrum.util import (UserCancelled, print_error,
-                           WalletFileException, BitcoinException)
+                           WalletFileException, SyscoinException)
 # from electrum.wallet import Abstract_Wallet
 
 from .installwizard import InstallWizard
@@ -223,7 +223,7 @@ class ElectrumGui:
                 pass
             except GoBack as e:
                 print_error('[start_new_window] Exception caught (GoBack)', e)
-            except (WalletFileException, BitcoinException) as e:
+            except (WalletFileException, SyscoinException) as e:
                 traceback.print_exc(file=sys.stderr)
                 d = QMessageBox(QMessageBox.Warning, _('Error'),
                                 _('Cannot load wallet') + ' (2):\n' + str(e))

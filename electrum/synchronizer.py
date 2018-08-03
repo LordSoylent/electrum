@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2014 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -25,7 +25,7 @@
 from threading import Lock
 import hashlib
 
-# from .bitcoin import Hash, hash_encode
+# from .syscoin import Hash, hash_encode
 from .transaction import Transaction
 from .util import ThreadJob, bh2u
 

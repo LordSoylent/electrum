@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2015 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -34,7 +34,7 @@ import base64
 import zlib
 from collections import defaultdict
 
-from . import util, bitcoin, ecc
+from . import util, syscoin, ecc
 from .util import PrintError, profiler, InvalidPassword, WalletFileException, bfh
 from .plugin import run_hook, plugin_loaders
 from .keystore import bip44_derivation
@@ -461,7 +461,7 @@ class WalletStorage(JsonDB):
                 d = {'change': []}
                 receiving_addresses = []
                 for pubkey in pubkeys:
-                    addr = bitcoin.pubkey_to_address('p2pkh', pubkey)
+                    addr = syscoin.pubkey_to_address('p2pkh', pubkey)
                     receiving_addresses.append(addr)
                 d['receiving'] = receiving_addresses
                 self.put('addresses', d)
@@ -486,7 +486,7 @@ class WalletStorage(JsonDB):
                 assert len(addresses) == len(pubkeys)
                 d = {}
                 for pubkey in pubkeys:
-                    addr = bitcoin.pubkey_to_address('p2pkh', pubkey)
+                    addr = syscoin.pubkey_to_address('p2pkh', pubkey)
                     assert addr in addresses
                     d[addr] = {
                         'pubkey': pubkey,
@@ -538,7 +538,7 @@ class WalletStorage(JsonDB):
             assert isinstance(addresses, dict)
             addresses_new = dict()
             for address, details in addresses.items():
-                if not bitcoin.is_address(address):
+                if not syscoin.is_address(address):
                     remove_address(address)
                     continue
                 if details is None:

@@ -1,7 +1,7 @@
 import unittest
 
 from electrum import transaction
-from electrum.bitcoin import TYPE_ADDRESS
+from electrum.syscoin import TYPE_ADDRESS
 from electrum.keystore import xpubkey_to_address
 from electrum.util import bh2u, bfh
 
@@ -308,8 +308,8 @@ class TestTransaction(SequentialTestCase):
         self._run_naive_tests_on_tx(raw_tx, txid)
 
 
-# these transactions are from Bitcoin Core unit tests --->
-# https://github.com/bitcoin/bitcoin/blob/11376b5583a283772c82f6d32d0007cdbf5b8ef0/src/test/data/tx_valid.json
+# these transactions are from Syscoin Core unit tests --->
+# https://github.com/syscoin/syscoin/blob/11376b5583a283772c82f6d32d0007cdbf5b8ef0/src/test/data/tx_valid.json
 
     def test_txid_bitcoin_core_0001(self):
         raw_tx = '0100000001b14bdcbc3e01bdaad36cc08e81e69c82e1060bc14e518db2b49aa43ad90ba26000000000490047304402203f16c6f40162ab686621ef3000b04e75418a0c0cb2d8aebeac894ae360ac1e780220ddc15ecdfc3507ac48e1681a33eb60996631bf6bf5bc0a0682c4db743ce7ca2b01ffffffff0140420f00000000001976a914660d4ef3a743e3e696ad990364e555c271ad504b88ac00000000'
@@ -771,7 +771,7 @@ class TestTransaction(SequentialTestCase):
         txid = '45d17fb7db86162b2b6ca29fa4e163acf0ef0b54110e49b819bda1f948d423a3'
         self._run_naive_tests_on_tx(raw_tx, txid)
 
-# txns from Bitcoin Core ends <---
+# txns from Syscoin Core ends <---
 
 
 class TestTransactionTestnet(TestCaseForTestnet):

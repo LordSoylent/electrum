@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2011 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -32,14 +32,14 @@ from typing import Sequence, Union, NamedTuple
 from .util import print_error, profiler
 
 from . import ecc
-from . import bitcoin
-from .bitcoin import *
+from . import syscoin
+from .syscoin import *
 import struct
 import traceback
 import sys
 
 #
-# Workalike python implementation of Bitcoin's CDataStream class.
+# Workalike python implementation of Syscoin's CDataStream class.
 #
 from .keystore import xpubkey_to_address, xpubkey_to_pubkey
 
@@ -83,7 +83,7 @@ class BCDataStream(object):
         # 0 to 252 :  1-byte-length followed by bytes (if any)
         # 253 to 65,535 : byte'253' 2-byte-length followed by bytes
         # 65,536 to 4,294,967,295 : byte '254' 4-byte-length followed by bytes
-        # ... and the Bitcoin client is coded to understand:
+        # ... and the Syscoin client is coded to understand:
         # greater than 4,294,967,295 : byte '255' 8-byte-length followed by bytes of string
         # ... but I don't think it actually handles any strings that big.
         if self.input is None:
@@ -322,7 +322,7 @@ def parse_scriptSig(d, _bytes):
         if item[0] == 0:
             # segwit embedded into p2sh
             # witness version 0
-            d['address'] = bitcoin.hash160_to_p2sh(bitcoin.hash_160(item))
+            d['address'] = syscoin.hash160_to_p2sh(syscoin.hash_160(item))
             if len(item) == 22:
                 d['type'] = 'p2wpkh-p2sh'
             elif len(item) == 34:
@@ -436,7 +436,7 @@ def get_address_from_output_script(_bytes, *, net=None):
     if match_decoded(decoded, match):
         return TYPE_PUBKEY, bh2u(decoded[0][1])
 
-    # Pay-by-Bitcoin-address TxOuts look like:
+    # Pay-by-Syscoin-address TxOuts look like:
     # DUP HASH160 20 BYTES:... EQUALVERIFY CHECKSIG
     match = [ opcodes.OP_DUP, opcodes.OP_HASH160, opcodes.OP_PUSHDATA4, opcodes.OP_EQUALVERIFY, opcodes.OP_CHECKSIG ]
     if match_decoded(decoded, match):
@@ -489,10 +489,10 @@ def construct_witness(items: Sequence[Union[str, int, bytes]]) -> str:
     witness = var_int(len(items))
     for item in items:
         if type(item) is int:
-            item = bitcoin.script_num_to_hex(item)
+            item = syscoin.script_num_to_hex(item)
         elif type(item) is bytes:
             item = bh2u(item)
-        witness += bitcoin.witness_push(item)
+        witness += syscoin.witness_push(item)
     return witness
 
 
@@ -531,7 +531,7 @@ def parse_witness(vds, txin, full_parse: bool):
             txin['witness_script'] = witness_script
             if not txin.get('scriptSig'):  # native segwit script
                 txin['type'] = 'p2wsh'
-                txin['address'] = bitcoin.script_to_p2wsh(witness_script)
+                txin['address'] = syscoin.script_to_p2wsh(witness_script)
         elif txin['type'] == 'p2wpkh-p2sh' or n == 2:
             txin['num_sig'] = 1
             txin['x_pubkeys'] = [w[1]]
@@ -539,7 +539,7 @@ def parse_witness(vds, txin, full_parse: bool):
             txin['signatures'] = parse_sig([w[0]])
             if not txin.get('scriptSig'):  # native segwit script
                 txin['type'] = 'p2wpkh'
-                txin['address'] = bitcoin.public_key_to_p2wpkh(bfh(txin['pubkeys'][0]))
+                txin['address'] = syscoin.public_key_to_p2wpkh(bfh(txin['pubkeys'][0]))
         else:
             raise UnknownTxinType()
     except UnknownTxinType:
@@ -553,7 +553,7 @@ def parse_witness(vds, txin, full_parse: bool):
 def parse_output(vds, i):
     d = {}
     d['value'] = vds.read_int64()
-    if d['value'] > TOTAL_COIN_SUPPLY_LIMIT_IN_BTC * COIN:
+    if d['value'] > TOTAL_COIN_SUPPLY_LIMIT_IN_SYS * COIN:
         raise SerializationError('invalid output amount (too large)')
     if d['value'] < 0:
         raise SerializationError('invalid output amount (negative)')
@@ -564,8 +564,11 @@ def parse_output(vds, i):
     return d
 
 
-def deserialize(raw: str, force_full_parse=False) -> dict:
-    raw_bytes = bfh(raw)
+# if expect_trailing_data, returns (deserialized transaction, start position of
+# trailing data)
+def deserialize(raw: str, force_full_parse=False, expect_trailing_data=False, raw_bytes=None, expect_trailing_bytes=False, copy_input=True, start_position=0) -> dict:
+    if raw_bytes is None:
+        raw_bytes = bfh(raw)
     d = {}
     if raw_bytes[:5] == PARTIAL_TXN_HEADER_MAGIC:
         d['partial'] = is_partial = True
@@ -578,7 +581,11 @@ def deserialize(raw: str, force_full_parse=False) -> dict:
         d['partial'] = is_partial = False
     full_parse = force_full_parse or is_partial
     vds = BCDataStream()
-    vds.write(raw_bytes)
+    if copy_input:
+        vds.write(raw_bytes)
+    else:
+        vds.input = raw_bytes
+    vds.read_cursor = start_position
     d['version'] = vds.read_int32()
     n_vin = vds.read_compact_size()
     is_segwit = (n_vin == 0)
@@ -596,9 +603,17 @@ def deserialize(raw: str, force_full_parse=False) -> dict:
             txin = d['inputs'][i]
             parse_witness(vds, txin, full_parse=full_parse)
     d['lockTime'] = vds.read_uint32()
-    if vds.can_read_more():
+    if vds.can_read_more() and not expect_trailing_data:
         raise SerializationError('extra junk at the end')
-    return d
+    if not expect_trailing_data:
+        return d
+    # The caller is expecting trailing data to be present; return starting
+    # position of trailing data in bytes format
+    if expect_trailing_bytes:
+        return d, vds.read_cursor
+    # The caller is expecting trailing data to be present; return starting
+    # position of trailing data in hex format
+    raise Exception("Unimplemented: starting position for trailing data in hex format")
 
 
 # pay & redeem scripts
@@ -624,13 +639,16 @@ class Transaction:
             self.raw = self.serialize()
         return self.raw
 
-    def __init__(self, raw):
+     def __init__(self, raw, expect_trailing_data=False, raw_bytes=None, expect_trailing_bytes=False, copy_input=True, start_position=0):
         if raw is None:
             self.raw = None
+            self.raw_bytes = raw_bytes
         elif isinstance(raw, str):
             self.raw = raw.strip() if raw else None
+            self.raw_bytes = raw_bytes
         elif isinstance(raw, dict):
             self.raw = raw['hex']
+            self.raw_bytes = raw_bytes
         else:
             raise Exception("cannot initialize transaction", raw)
         self._inputs = None
@@ -641,6 +659,10 @@ class Transaction:
         # this value will get properly set when deserializing
         self.is_partial_originally = True
         self._segwit_ser = None  # None means "don't know"
+        self.expect_trailing_data = expect_trailing_data
+        self.expect_trailing_bytes = expect_trailing_bytes
+        self.copy_input = copy_input
+        self.start_position = start_position
 
     def update(self, raw):
         self.raw = raw
@@ -717,20 +739,40 @@ class Transaction:
         txin['witness'] = None    # force re-serialization
         self.raw = None
 
+    # If expect_trailing_data == True, also returns start position of trailing
+    # data.
     def deserialize(self, force_full_parse=False):
-        if self.raw is None:
+        if self.raw is None and self.raw_bytes is None:
             return
             #self.raw = self.serialize()
         if self._inputs is not None:
             return
-        d = deserialize(self.raw, force_full_parse)
+        if self.expect_trailing_data:
+            d, start_position = deserialize(self.raw, force_full_parse, expect_trailing_data=self.expect_trailing_data, raw_bytes=self.raw_bytes, expect_trailing_bytes=self.expect_trailing_bytes, copy_input=self.copy_input, start_position=self.start_position)
+        else:
+            d = deserialize(self.raw, force_full_parse, raw_bytes=self.raw_bytes, start_position=self.start_position)
         self._inputs = d['inputs']
-        self._outputs = [TxOutput(x['type'], x['address'], x['value']) for x in d['outputs']]
+        self._outputs = [(x['type'], x['address'], x['value']) for x in d['outputs']]
         self.locktime = d['lockTime']
         self.version = d['version']
         self.is_partial_originally = d['partial']
         self._segwit_ser = d['segwit_ser']
-        return d
+        if self.expect_trailing_data:
+            if self.expect_trailing_bytes:
+                if self.raw is not None:
+                    self.raw = self.raw[(2*self.start_position):(2*start_position)]
+                if self.raw_bytes is not None:
+                    self.raw_bytes = self.raw_bytes[self.start_position:start_position]
+            else:
+                if self.raw is not None:
+                    self.raw = self.raw[self.start_position:start_position]
+                if self.raw_bytes is not None:
+                    self.raw_bytes = self.raw_bytes[(self.start_position//2):(start_position//2)]
+            self.expect_trailing_data = False
+            self.start_position = 0
+            return d, start_position
+        else:
+            return d
 
     @classmethod
     def from_io(klass, inputs, outputs, locktime=0):
@@ -745,9 +787,9 @@ class Transaction:
         if output_type == TYPE_SCRIPT:
             return addr
         elif output_type == TYPE_ADDRESS:
-            return bitcoin.address_to_script(addr)
+            return syscoin.address_to_script(addr)
         elif output_type == TYPE_PUBKEY:
-            return bitcoin.public_key_to_p2pk_script(addr)
+            return syscoin.public_key_to_p2pk_script(addr)
         else:
             raise TypeError('Unknown output type')
 
@@ -898,14 +940,14 @@ class Transaction:
             return ''
         elif _type == 'p2wpkh-p2sh':
             pubkey = safe_parse_pubkey(pubkeys[0])
-            scriptSig = bitcoin.p2wpkh_nested_script(pubkey)
+            scriptSig = syscoin.p2wpkh_nested_script(pubkey)
             return push_script(scriptSig)
         elif _type == 'p2wsh-p2sh':
             if estimate_size:
                 witness_script = ''
             else:
                 witness_script = self.get_preimage_script(txin)
-            scriptSig = bitcoin.p2wsh_nested_script(witness_script)
+            scriptSig = syscoin.p2wsh_nested_script(witness_script)
             return push_script(scriptSig)
         elif _type == 'address':
             return 'ff00' + push_script(pubkeys[0])  # fd extended pubkey
@@ -932,16 +974,16 @@ class Transaction:
 
         pubkeys, x_pubkeys = self.get_sorted_pubkeys(txin)
         if txin['type'] == 'p2pkh':
-            return bitcoin.address_to_script(txin['address'])
+            return syscoin.address_to_script(txin['address'])
         elif txin['type'] in ['p2sh', 'p2wsh', 'p2wsh-p2sh']:
             return multisig_script(pubkeys, txin['num_sig'])
         elif txin['type'] in ['p2wpkh', 'p2wpkh-p2sh']:
             pubkey = pubkeys[0]
-            pkh = bh2u(bitcoin.hash_160(bfh(pubkey)))
+            pkh = bh2u(syscoin.hash_160(bfh(pubkey)))
             return '76a9' + push_script(pkh) + '88ac'
         elif txin['type'] == 'p2pk':
             pubkey = pubkeys[0]
-            return bitcoin.public_key_to_p2pk_script(pubkey)
+            return syscoin.public_key_to_p2pk_script(pubkey)
         else:
             raise TypeError('Unknown txin type', txin['type'])
 
@@ -1105,7 +1147,7 @@ class Transaction:
     @classmethod
     def estimated_output_size(cls, address):
         """Return an estimate of serialized output size in bytes."""
-        script = bitcoin.address_to_script(address)
+        script = syscoin.address_to_script(address)
         # 8 byte value + 1 byte script len + script
         return 9 + len(script) // 2
 
@@ -1190,7 +1232,7 @@ class Transaction:
                 addr = o.address
             elif o.type == TYPE_PUBKEY:
                 # TODO do we really want this conversion? it's not really that address after all
-                addr = bitcoin.public_key_to_p2pkh(bfh(o.address))
+                addr = syscoin.public_key_to_p2pkh(bfh(o.address))
             else:
                 addr = 'SCRIPT ' + o.address
             outputs.append((addr, o.value))      # consider using yield (addr, v)

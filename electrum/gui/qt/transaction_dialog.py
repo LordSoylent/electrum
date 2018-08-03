@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2012 thomasv@gitorious
 #
 # Permission is hereby granted, free of charge, to any person
@@ -34,7 +34,7 @@ from PyQt5.QtWidgets import *
 import qrcode
 from qrcode import exceptions
 
-from electrum.bitcoin import base_encode
+from electrum.syscoin import base_encode
 from electrum.i18n import _
 from electrum.plugin import run_hook
 from electrum import simple_config

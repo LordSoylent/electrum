@@ -5,7 +5,7 @@ import getpass
 
 import electrum
 from electrum.util import format_satoshis, set_verbosity
-from electrum.bitcoin import is_address, COIN, TYPE_ADDRESS
+from electrum.syscoin import is_address, COIN, TYPE_ADDRESS
 from electrum.transaction import TxOutput
 from .. import Wallet, WalletStorage
 
@@ -321,7 +321,7 @@ class ElectrumGui:
 
     def do_send(self):
         if not is_address(self.str_recipient):
-            self.show_message(_('Invalid Bitcoin address'))
+            self.show_message(_('Invalid Syscoin address'))
             return
         try:
             amount = int(Decimal(self.str_amount) * COIN)

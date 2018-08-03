@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2014 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -32,7 +32,7 @@ import string
 import ecdsa
 
 from .util import print_error
-from .bitcoin import is_old_seed, is_new_seed
+from .syscoin import is_old_seed, is_new_seed
 from . import version
 
 # http://www.asahi-net.or.jp/~ax2s-kmtn/ref/unicode/e_asia.html

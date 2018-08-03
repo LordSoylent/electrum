@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- mode: python -*-
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2016  The Electrum developers
 #
 # Permission is hereby granted, free of charge, to any person
@@ -26,12 +26,12 @@
 
 from unicodedata import normalize
 
-from . import bitcoin, ecc, constants
-from .bitcoin import *
+from . import syscoin, ecc, constants
+from .syscoin import *
 from .ecc import string_to_number, number_to_string
 from .crypto import pw_decode, pw_encode
 from .util import (PrintError, InvalidPassword, hfu, WalletFileException,
-                   BitcoinException)
+                   SyscoinException)
 from .mnemonic import Mnemonic, load_wordlist
 from .plugin import run_hook
 
@@ -169,7 +169,7 @@ class Imported_KeyStore(Software_KeyStore):
             if x_pubkey in self.keypairs.keys():
                 return x_pubkey
         elif x_pubkey[0:2] == 'fd':
-            addr = bitcoin.script_to_address(x_pubkey[2:])
+            addr = syscoin.script_to_address(x_pubkey[2:])
             if addr in self.addresses:
                 return self.addresses[addr].get('pubkey')
 
@@ -248,19 +248,19 @@ class Xpub:
         return bh2u(cK)
 
     def get_xpubkey(self, c, i):
-        s = ''.join(map(lambda x: bitcoin.int_to_hex(x,2), (c, i)))
-        return 'ff' + bh2u(bitcoin.DecodeBase58Check(self.xpub)) + s
+        s = ''.join(map(lambda x: syscoin.int_to_hex(x,2), (c, i)))
+        return 'ff' + bh2u(syscoin.DecodeBase58Check(self.xpub)) + s
 
     @classmethod
     def parse_xpubkey(self, pubkey):
         assert pubkey[0:2] == 'ff'
         pk = bfh(pubkey)
         pk = pk[1:]
-        xkey = bitcoin.EncodeBase58Check(pk[0:78])
+        xkey = syscoin.EncodeBase58Check(pk[0:78])
         dd = pk[78:]
         s = []
         while dd:
-            n = int(bitcoin.rev_hex(bh2u(dd[0:2])), 16)
+            n = int(syscoin.rev_hex(bh2u(dd[0:2])), 16)
             dd = dd[2:]
             s.append(n)
         assert len(s) == 2
@@ -320,7 +320,7 @@ class BIP32_KeyStore(Deterministic_KeyStore, Xpub):
 
     def add_xprv(self, xprv):
         self.xprv = xprv
-        self.xpub = bitcoin.xpub_from_xprv(xprv)
+        self.xpub = syscoin.xpub_from_xprv(xprv)
 
     def add_xprv_from_seed(self, bip32_seed, xtype, derivation):
         xprv, xpub = bip32_root(bip32_seed, xtype)
@@ -435,7 +435,7 @@ class Old_KeyStore(Deterministic_KeyStore):
         return self.mpk
 
     def get_xpubkey(self, for_change, n):
-        s = ''.join(map(lambda x: bitcoin.int_to_hex(x,2), (for_change, n)))
+        s = ''.join(map(lambda x: syscoin.int_to_hex(x,2), (for_change, n)))
         return 'fe' + self.mpk + s
 
     @classmethod
@@ -446,7 +446,7 @@ class Old_KeyStore(Deterministic_KeyStore):
         dd = pk[128:]
         s = []
         while dd:
-            n = int(bitcoin.rev_hex(dd[0:4]), 16)
+            n = int(syscoin.rev_hex(dd[0:4]), 16)
             dd = dd[4:]
             s.append(n)
         assert len(s) == 2
@@ -633,7 +633,7 @@ def parse_xpubkey(x_pubkey):
 
 def xpubkey_to_address(x_pubkey):
     if x_pubkey[0:2] == 'fd':
-        address = bitcoin.script_to_address(x_pubkey[2:])
+        address = syscoin.script_to_address(x_pubkey[2:])
         return x_pubkey, address
     if x_pubkey[0:2] in ['02', '03', '04']:
         pubkey = x_pubkey
@@ -644,7 +644,7 @@ def xpubkey_to_address(x_pubkey):
         mpk, s = Old_KeyStore.parse_xpubkey(x_pubkey)
         pubkey = Old_KeyStore.get_pubkey_from_mpk(mpk, s[0], s[1])
     else:
-        raise BitcoinException("Cannot parse pubkey. prefix: {}"
+        raise SyscoinException("Cannot parse pubkey. prefix: {}"
                                .format(x_pubkey[0:2]))
     if pubkey:
         address = public_key_to_p2pkh(bfh(pubkey))
@@ -703,14 +703,14 @@ def is_old_mpk(mpk: str) -> bool:
 
 def is_address_list(text):
     parts = text.split()
-    return bool(parts) and all(bitcoin.is_address(x) for x in parts)
+    return bool(parts) and all(syscoin.is_address(x) for x in parts)
 
 
 def get_private_keys(text):
     parts = text.split('\n')
     parts = map(lambda x: ''.join(x.split()), parts)
     parts = list(filter(bool, parts))
-    if bool(parts) and all(bitcoin.is_private_key(x) for x in parts):
+    if bool(parts) and all(syscoin.is_private_key(x) for x in parts):
         return parts
 
 
@@ -759,7 +759,7 @@ def from_seed(seed, passphrase, is_p2sh):
             xtype = 'p2wsh' if is_p2sh else 'p2wpkh'
         keystore.add_xprv_from_seed(bip32_seed, xtype, der)
     else:
-        raise BitcoinException('Unexpected seed type {}'.format(t))
+        raise SyscoinException('Unexpected seed type {}'.format(t))
     return keystore
 
 def from_private_key_list(text):
@@ -779,7 +779,7 @@ def from_xpub(xpub):
     return k
 
 def from_xprv(xprv):
-    xpub = bitcoin.xpub_from_xprv(xprv)
+    xpub = syscoin.xpub_from_xprv(xprv)
     k = BIP32_KeyStore({})
     k.xprv = xprv
     k.xpub = xpub
@@ -793,5 +793,5 @@ def from_master_key(text):
     elif is_xpub(text):
         k = from_xpub(text)
     else:
-        raise BitcoinException('Invalid master key')
+        raise SyscoinException('Invalid master key')
     return k

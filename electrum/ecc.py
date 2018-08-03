@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2018 The Electrum developers
 #
 # Permission is hereby granted, free of charge, to any person
@@ -298,13 +298,13 @@ class ECPubkey(object):
 
 
 def msg_magic(message: bytes) -> bytes:
-    from .bitcoin import var_int
+    from .syscoin import var_int
     length = bfh(var_int(len(message)))
-    return b"\x18Bitcoin Signed Message:\n" + length + message
+    return b"\x18Syscoin Signed Message:\n" + length + message
 
 
 def verify_message_with_address(address: str, sig65: bytes, message: bytes):
-    from .bitcoin import pubkey_to_address
+    from .syscoin import pubkey_to_address
     assert_bytes(sig65, message)
     try:
         h = Hash(msg_magic(message))

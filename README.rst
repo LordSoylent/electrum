@@ -1,4 +1,4 @@
-Electrum - Lightweight Bitcoin client
+Electrum - Lightweight Syscoin client
 =====================================
 
 ::
@@ -9,11 +9,11 @@ Electrum - Lightweight Bitcoin client
   Homepage: https://electrum.org/
 
 
-.. image:: https://travis-ci.org/spesmilo/electrum.svg?branch=master
-    :target: https://travis-ci.org/spesmilo/electrum
+.. image:: https://travis-ci.org/syscoin/electrum.svg?branch=master
+    :target: https://travis-ci.org/syscoin/electrum
     :alt: Build Status
-.. image:: https://coveralls.io/repos/github/spesmilo/electrum/badge.svg?branch=master
-    :target: https://coveralls.io/github/spesmilo/electrum?branch=master
+.. image:: https://coveralls.io/repos/github/syscoin/electrum/badge.svg?branch=master
+    :target: https://coveralls.io/github/syscoin/electrum?branch=master
     :alt: Test coverage statistics
 .. image:: https://d322cqt584bo4o.cloudfront.net/electrum/localized.svg
     :target: https://crowdin.com/project/electrum
@@ -59,7 +59,7 @@ Development version
 
 Check out the code from GitHub::
 
-    git clone git://github.com/spesmilo/electrum.git
+    git clone git://github.com/syscoin/electrum.git
     cd electrum
 
 Run install (this should install dependencies)::

@@ -2,7 +2,7 @@ import base64
 import unittest
 import sys
 
-from electrum.bitcoin import (
+from electrum.syscoin import (
     public_key_to_p2pkh,
     bip32_root, bip32_public_derivation, bip32_private_derivation,
     Hash, address_from_private_key,
@@ -304,7 +304,7 @@ class Test_bitcoin(SequentialTestCase):
         self.assertEqual(op_push(0x12345678), '4e78563412')
 
     def test_script_num_to_hex(self):
-        # test vectors from https://github.com/btcsuite/btcd/blob/fdc2bc867bda6b351191b5872d2da8270df00d13/txscript/scriptnum.go#L77
+        # test vectors from https://github.com/syssuite/sysd/blob/fdc2bc867bda6b351191b5872d2da8270df00d13/txscript/scriptnum.go#L77
         self.assertEqual(script_num_to_hex(127), '7f')
         self.assertEqual(script_num_to_hex(-127), 'ff')
         self.assertEqual(script_num_to_hex(128), '8000')
@@ -319,7 +319,7 @@ class Test_bitcoin(SequentialTestCase):
         self.assertEqual(script_num_to_hex(-32768), '008080')
 
     def test_push_script(self):
-        # https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#push-operators
+        # https://github.com/syscoin/bips/blob/master/bip-0062.mediawiki#push-operators
         self.assertEqual(push_script(''), bh2u(bytes([opcodes.OP_0])))
         self.assertEqual(push_script('07'), bh2u(bytes([opcodes.OP_7])))
         self.assertEqual(push_script('10'), bh2u(bytes([opcodes.OP_16])))
@@ -333,7 +333,7 @@ class Test_bitcoin(SequentialTestCase):
         self.assertEqual(push_script(520 * '42'), bh2u(bytes([opcodes.OP_PUSHDATA2]) + bfh('0802' + 520 * '42')))
 
     def test_add_number_to_script(self):
-        # https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#numbers
+        # https://github.com/syscoin/bips/blob/master/bip-0062.mediawiki#numbers
         self.assertEqual(add_number_to_script(0), bytes([opcodes.OP_0]))
         self.assertEqual(add_number_to_script(7), bytes([opcodes.OP_7]))
         self.assertEqual(add_number_to_script(16), bytes([opcodes.OP_16]))
@@ -392,7 +392,7 @@ class Test_bitcoin_testnet(TestCaseForTestnet):
 class Test_xprv_xpub(SequentialTestCase):
 
     xprv_xpub = (
-        # Taken from test vectors in https://en.bitcoin.it/wiki/BIP_0032_TestVectors
+        # Taken from test vectors in https://en.syscoin.it/wiki/BIP_0032_TestVectors
         {'xprv': 'xprvA41z7zogVVwxVSgdKUHDy1SKmdb533PjDz7J6N6mV6uS3ze1ai8FHa8kmHScGpWmj4WggLyQjgPie1rFSruoUihUZREPSL39UNdE3BBDu76',
          'xpub': 'xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy',
          'xtype': 'standard'},
@@ -422,7 +422,7 @@ class Test_xprv_xpub(SequentialTestCase):
 
     @needs_test_with_all_ecc_implementations
     def test_bip32(self):
-        # see https://en.bitcoin.it/wiki/BIP_0032_TestVectors
+        # see https://en.syscoin.it/wiki/BIP_0032_TestVectors
         xpub, xprv = self._do_test_bip32("000102030405060708090a0b0c0d0e0f", "m/0'/1/2'/2/1000000000")
         self.assertEqual("xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy", xpub)
         self.assertEqual("xprvA41z7zogVVwxVSgdKUHDy1SKmdb533PjDz7J6N6mV6uS3ze1ai8FHa8kmHScGpWmj4WggLyQjgPie1rFSruoUihUZREPSL39UNdE3BBDu76", xprv)

@@ -1,4 +1,4 @@
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2015 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -42,15 +42,15 @@ from decimal import Decimal
 from .i18n import _
 from .util import (NotEnoughFunds, PrintError, UserCancelled, profiler,
                    format_satoshis, format_fee_satoshis, NoDynamicFeeEstimates,
-                   TimeoutException, WalletFileException, BitcoinException,
+                   TimeoutException, WalletFileException, SyscoinException,
                    InvalidPassword, format_time)
 
-from .bitcoin import *
+from .syscoin import *
 from .version import *
 from .keystore import load_keystore, Hardware_KeyStore
 from .storage import multisig_type, STO_EV_PLAINTEXT, STO_EV_USER_PW, STO_EV_XPUB_PW
 
-from . import transaction, bitcoin, coinchooser, paymentrequest, contacts
+from . import transaction, syscoin, coinchooser, paymentrequest, contacts
 from .transaction import Transaction, TxOutput
 from .plugin import run_hook
 from .address_synchronizer import (AddressSynchronizer, TX_HEIGHT_LOCAL,
@@ -82,11 +82,11 @@ def dust_threshold(network):
 
 def append_utxos_to_inputs(inputs, network, pubkey, txin_type, imax):
     if txin_type != 'p2pk':
-        address = bitcoin.pubkey_to_address(txin_type, pubkey)
-        scripthash = bitcoin.address_to_scripthash(address)
+        address = syscoin.pubkey_to_address(txin_type, pubkey)
+        scripthash = syscoin.address_to_scripthash(address)
     else:
-        script = bitcoin.public_key_to_p2pk_script(pubkey)
-        scripthash = bitcoin.script_to_scripthash(script)
+        script = syscoin.public_key_to_p2pk_script(pubkey)
+        scripthash = syscoin.script_to_scripthash(script)
         address = '(pubkey)'
 
     u = network.listunspent_for_scripthash(scripthash)
@@ -112,7 +112,7 @@ def sweep_preparations(privkeys, network, imax=100):
     inputs = []
     keypairs = {}
     for sec in privkeys:
-        txin_type, privkey, compressed = bitcoin.deserialize_privkey(sec)
+        txin_type, privkey, compressed = syscoin.deserialize_privkey(sec)
         find_utxos_for_privkey(txin_type, privkey, compressed)
         # do other lookups to increase support coverage
         if is_minikey(sec):
@@ -219,8 +219,8 @@ class Abstract_Wallet(AddressSynchronizer):
     def test_addresses_sanity(self):
         addrs = self.get_receiving_addresses()
         if len(addrs) > 0:
-            if not bitcoin.is_address(addrs[0]):
-                raise WalletFileException('The addresses in this wallet are not bitcoin addresses.')
+            if not syscoin.is_address(addrs[0]):
+                raise WalletFileException('The addresses in this wallet are not syscoin addresses.')
 
     def synchronize(self):
         pass
@@ -298,7 +298,7 @@ class Abstract_Wallet(AddressSynchronizer):
         pk, compressed = self.keystore.get_private_key(index, password)
         txin_type = self.get_txin_type(address)
         redeem_script = self.get_redeem_script(address)
-        serialized_privkey = bitcoin.serialize_privkey(pk, compressed, txin_type)
+        serialized_privkey = syscoin.serialize_privkey(pk, compressed, txin_type)
         return serialized_privkey, redeem_script
 
     def get_public_keys(self, address):
@@ -539,7 +539,7 @@ class Abstract_Wallet(AddressSynchronizer):
         for i, o in enumerate(outputs):
             if o.type == TYPE_ADDRESS:
                 if not is_address(o.address):
-                    raise Exception("Invalid bitcoin address: {}".format(o.address))
+                    raise Exception("Invalid syscoin address: {}".format(o.address))
             if o.value == '!':
                 if i_max is not None:
                     raise Exception("More than one output set to spend max")
@@ -857,7 +857,7 @@ class Abstract_Wallet(AddressSynchronizer):
         if not r:
             return
         out = copy.copy(r)
-        out['URI'] = 'bitcoin:' + addr + '?amount=' + format_satoshis(out.get('amount'))
+        out['URI'] = 'syscoin:' + addr + '?amount=' + format_satoshis(out.get('amount'))
         status, conf = self.get_request_status(addr)
         out['status'] = status
         if conf is not None:
@@ -933,8 +933,8 @@ class Abstract_Wallet(AddressSynchronizer):
 
     def add_payment_request(self, req, config):
         addr = req['address']
-        if not bitcoin.is_address(addr):
-            raise Exception(_('Invalid Bitcoin address.'))
+        if not syscoin.is_address(addr):
+            raise Exception(_('Invalid Syscoin address.'))
         if not self.is_mine(addr):
             raise Exception(_('Address not in wallet.'))
 
@@ -1091,7 +1091,7 @@ class Abstract_Wallet(AddressSynchronizer):
         return None
 
     def price_at_timestamp(self, txid, price_func):
-        """Returns fiat price of bitcoin at the time tx got confirmed."""
+        """Returns fiat price of syscoin at the time tx got confirmed."""
         timestamp = self.get_tx_height(txid).timestamp
         return price_func(timestamp if timestamp else time.time())
 
@@ -1230,7 +1230,7 @@ class Imported_Wallet(Simple_Wallet):
         return []
 
     def import_address(self, address):
-        if not bitcoin.is_address(address):
+        if not syscoin.is_address(address):
             return ''
         if address in self.addresses:
             return ''
@@ -1274,9 +1274,9 @@ class Imported_Wallet(Simple_Wallet):
         self.addresses.pop(address)
         if pubkey:
             # delete key iff no other address uses it (e.g. p2pkh and p2wpkh for same key)
-            for txin_type in bitcoin.WIF_SCRIPT_TYPES.keys():
+            for txin_type in syscoin.WIF_SCRIPT_TYPES.keys():
                 try:
-                    addr2 = bitcoin.pubkey_to_address(txin_type, pubkey)
+                    addr2 = syscoin.pubkey_to_address(txin_type, pubkey)
                 except NotImplementedError:
                     pass
                 else:
@@ -1300,15 +1300,15 @@ class Imported_Wallet(Simple_Wallet):
             txin_type, pubkey = self.keystore.import_privkey(sec, pw)
         except Exception:
             neutered_privkey = str(sec)[:3] + '..' + str(sec)[-2:]
-            raise BitcoinException('Invalid private key: {}'.format(neutered_privkey))
+            raise SyscoinException('Invalid private key: {}'.format(neutered_privkey))
         if txin_type in ['p2pkh', 'p2wpkh', 'p2wpkh-p2sh']:
             if redeem_script is not None:
-                raise BitcoinException('Cannot use redeem script with script type {}'.format(txin_type))
-            addr = bitcoin.pubkey_to_address(txin_type, pubkey)
+                raise SyscoinException('Cannot use redeem script with script type {}'.format(txin_type))
+            addr = syscoin.pubkey_to_address(txin_type, pubkey)
         elif txin_type in ['p2sh', 'p2wsh', 'p2wsh-p2sh']:
             if redeem_script is None:
-                raise BitcoinException('Redeem script required for script type {}'.format(txin_type))
-            addr = bitcoin.redeem_script_to_address(txin_type, redeem_script)
+                raise SyscoinException('Redeem script required for script type {}'.format(txin_type))
+            addr = syscoin.redeem_script_to_address(txin_type, redeem_script)
         else:
             raise NotImplementedError(txin_type)
         self.addresses[addr] = {'type':txin_type, 'pubkey':pubkey, 'redeem_script':redeem_script}
@@ -1491,7 +1491,7 @@ class Simple_Deterministic_Wallet(Simple_Wallet, Deterministic_Wallet):
     def load_keystore(self):
         self.keystore = load_keystore(self.storage, 'keystore')
         try:
-            xtype = bitcoin.xpub_type(self.keystore.xpub)
+            xtype = syscoin.xpub_type(self.keystore.xpub)
         except:
             xtype = 'standard'
         self.txin_type = 'p2pkh' if xtype == 'standard' else xtype
@@ -1521,7 +1521,7 @@ class Standard_Wallet(Simple_Deterministic_Wallet):
     wallet_type = 'standard'
 
     def pubkeys_to_address(self, pubkey):
-        return bitcoin.pubkey_to_address(self.txin_type, pubkey)
+        return syscoin.pubkey_to_address(self.txin_type, pubkey)
 
 
 class Multisig_Wallet(Deterministic_Wallet):
@@ -1542,7 +1542,7 @@ class Multisig_Wallet(Deterministic_Wallet):
 
     def pubkeys_to_address(self, pubkeys):
         redeem_script = self.pubkeys_to_redeem_script(pubkeys)
-        return bitcoin.redeem_script_to_address(self.txin_type, redeem_script)
+        return syscoin.redeem_script_to_address(self.txin_type, redeem_script)
 
     def pubkeys_to_redeem_script(self, pubkeys):
         return transaction.multisig_script(sorted(pubkeys), self.m)
@@ -1561,7 +1561,7 @@ class Multisig_Wallet(Deterministic_Wallet):
             name = 'x%d/'%(i+1)
             self.keystores[name] = load_keystore(self.storage, name)
         self.keystore = self.keystores['x1/']
-        xtype = bitcoin.xpub_type(self.keystore.xpub)
+        xtype = syscoin.xpub_type(self.keystore.xpub)
         self.txin_type = 'p2sh' if xtype == 'standard' else xtype
 
     def save_keystore(self):

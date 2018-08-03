@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2015 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -32,7 +32,7 @@ except ImportError:
     sys.exit("install SimpleWebSocketServer")
 
 from . import util
-from . import bitcoin
+from . import syscoin
 
 request_queue = queue.Queue()
 
@@ -101,7 +101,7 @@ class WsClientThread(util.DaemonThread):
                 continue    
             if method == 'blockchain.scripthash.subscribe':
                 addr = r.get('params')[0]
-                scripthash = bitcoin.address_to_scripthash(addr)
+                scripthash = syscoin.address_to_scripthash(addr)
                 self.network.get_balance_for_scripthash(
                         scripthash, self.response_queue.put)
             elif method == 'blockchain.scripthash.get_balance':

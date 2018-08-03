@@ -48,7 +48,7 @@ extras_require['full'] = extras_require['hardware'] + extras_require['fast']
 
 
 setup(
-    name="Electrum",
+    name="Electrum-Syscoin",
     version=version.ELECTRUM_VERSION,
     install_requires=requirements,
     extras_require=extras_require,
@@ -70,10 +70,10 @@ setup(
     },
     scripts=['electrum/electrum'],
     data_files=data_files,
-    description="Lightweight Bitcoin Wallet",
-    author="Thomas Voegtlin",
-    author_email="thomasv@electrum.org",
+    description="Lightweight Syscoin Wallet",
+    author="Jagdeep Sidhu",
+    author_email="jsidhu@blockchainfoundry.co",
     license="MIT Licence",
-    url="https://electrum.org",
-    long_description="""Lightweight Bitcoin Wallet"""
+    url="https://syscoin.org",
+    long_description="""Lightweight Syscoin Wallet"""
 )

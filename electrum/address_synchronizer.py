@@ -1,4 +1,4 @@
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2018 The Electrum Developers
 #
 # Permission is hereby granted, free of charge, to any person
@@ -25,8 +25,8 @@ import threading
 import itertools
 from collections import defaultdict
 
-from . import bitcoin
-from .bitcoin import COINBASE_MATURITY, TYPE_ADDRESS, TYPE_PUBKEY
+from . import syscoin
+from .syscoin import COINBASE_MATURITY, TYPE_ADDRESS, TYPE_PUBKEY
 from .util import PrintError, profiler, bfh, VerifiedTxInfo, TxMinedStatus
 from .transaction import Transaction, TxOutput
 from .synchronizer import Synchronizer
@@ -121,7 +121,7 @@ class AddressSynchronizer(PrintError):
         if txo.type == TYPE_ADDRESS:
             addr = txo.address
         elif txo.type == TYPE_PUBKEY:
-            addr = bitcoin.public_key_to_p2pkh(bfh(txo.address))
+            addr = syscoin.public_key_to_p2pkh(bfh(txo.address))
         else:
             addr = None
         return addr
@@ -729,7 +729,7 @@ class AddressSynchronizer(PrintError):
 
     @with_local_height_cached
     def get_addr_balance(self, address):
-        """Return the balance of a bitcoin address:
+        """Return the balance of a syscoin address:
         confirmed and matured, unconfirmed, unmatured
         """
         received, sent = self.get_addr_io(address)

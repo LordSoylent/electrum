@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2015 Thomas Voegtlin
 #
 # Permission is hereby granted, free of charge, to any person
@@ -27,7 +27,7 @@ import webbrowser
 from electrum.i18n import _
 from electrum.util import block_explorer_URL
 from electrum.plugin import run_hook
-from electrum.bitcoin import is_address
+from electrum.syscoin import is_address
 
 from .util import *
 

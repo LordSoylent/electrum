@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Electrum - lightweight Bitcoin client
+# Electrum - lightweight Syscoin client
 # Copyright (C) 2011 thomasv@gitorious
 #
 # Permission is hereby granted, free of charge, to any person
@@ -26,7 +26,7 @@
 import hashlib
 import hmac
 
-from .util import bfh, bh2u, BitcoinException, print_error, assert_bytes, to_bytes, inv_dict
+from .util import bfh, bh2u, SyscoinException, print_error, assert_bytes, to_bytes, inv_dict
 from . import version
 from . import segwit_addr
 from . import constants
@@ -38,7 +38,7 @@ from .crypto import Hash, sha256, hash_160, hmac_oneshot
 
 COINBASE_MATURITY = 100
 COIN = 100000000
-TOTAL_COIN_SUPPLY_LIMIT_IN_BTC = 21000000
+TOTAL_COIN_SUPPLY_LIMIT_IN_SYS = 888000000
 
 # supported types of transaction outputs
 TYPE_ADDRESS = 0
@@ -67,10 +67,10 @@ def int_to_hex(i: int, length: int=1) -> str:
     return rev_hex(s)
 
 def script_num_to_hex(i: int) -> str:
-    """See CScriptNum in Bitcoin Core.
+    """See CScriptNum in Syscoin Core.
     Encodes an integer as hex, to be used in script.
 
-    ported from https://github.com/bitcoin/bitcoin/blob/8cbc5c4be4be22aca228074f087a374a7ec38be8/src/script/script.h#L326
+    ported from https://github.com/syscoin/syscoin/blob/8cbc5c4be4be22aca228074f087a374a7ec38be8/src/script/script.h#L326
     """
     if i == 0:
         return ''
@@ -91,7 +91,7 @@ def script_num_to_hex(i: int) -> str:
 
 
 def var_int(i: int) -> str:
-    # https://en.bitcoin.it/wiki/Protocol_specification#Variable_length_integer
+    # https://en.syscoin.it/wiki/Protocol_specification#Variable_length_integer
     if i<0xfd:
         return int_to_hex(i)
     elif i<=0xffff:
@@ -125,7 +125,7 @@ def push_script(data: str) -> str:
     choosing canonical opcodes depending on the length of the data.
     hex -> hex
 
-    ported from https://github.com/btcsuite/btcd/blob/fdc2bc867bda6b351191b5872d2da8270df00d13/txscript/scriptbuilder.go#L128
+    ported from https://github.com/syssuite/sysd/blob/fdc2bc867bda6b351191b5872d2da8270df00d13/txscript/scriptbuilder.go#L128
     """
     data = bfh(data)
     from .transaction import opcodes
@@ -272,7 +272,7 @@ def address_to_script(addr, *, net=None):
     witver, witprog = segwit_addr.decode(net.SEGWIT_HRP, addr)
     if witprog is not None:
         if not (0 <= witver <= 16):
-            raise BitcoinException('impossible witness version: {}'.format(witver))
+            raise SyscoinException('impossible witness version: {}'.format(witver))
         OP_n = witver + 0x50 if witver > 0 else 0
         script = bh2u(bytes([OP_n]))
         script += push_script(bh2u(bytes(witprog)))
@@ -287,7 +287,7 @@ def address_to_script(addr, *, net=None):
         script += push_script(bh2u(hash_160))
         script += '87'                                       # op_equal
     else:
-        raise BitcoinException('unknown address type: {}'.format(addrtype))
+        raise SyscoinException('unknown address type: {}'.format(addrtype))
     return script
 
 def address_to_scripthash(addr):
@@ -327,7 +327,7 @@ def base_encode(v: bytes, base: int) -> str:
         result.append(chars[mod])
         long_value = div
     result.append(chars[long_value])
-    # Bitcoin does a little leading-zero-compression:
+    # Syscoin does a little leading-zero-compression:
     # leading 0-bytes in the input become leading-1s
     nPad = 0
     for c in v:
@@ -441,12 +441,12 @@ def deserialize_privkey(key: str) -> (str, bytes, bool):
     if ':' in key:
         txin_type, key = key.split(sep=':', maxsplit=1)
         if txin_type not in WIF_SCRIPT_TYPES:
-            raise BitcoinException('unknown script type: {}'.format(txin_type))
+            raise SyscoinException('unknown script type: {}'.format(txin_type))
     try:
         vch = DecodeBase58Check(key)
     except BaseException:
         neutered_privkey = str(key)[:3] + '..' + str(key)[-2:]
-        raise BitcoinException("cannot deserialize privkey {}"
+        raise SyscoinException("cannot deserialize privkey {}"
                                .format(neutered_privkey))
 
     if txin_type is None:
@@ -455,14 +455,14 @@ def deserialize_privkey(key: str) -> (str, bytes, bool):
         try:
             txin_type = WIF_SCRIPT_TYPES_INV[prefix_value]
         except KeyError:
-            raise BitcoinException('invalid prefix ({}) for WIF key (1)'.format(vch[0]))
+            raise SyscoinException('invalid prefix ({}) for WIF key (1)'.format(vch[0]))
     else:
         # all other keys must have a fixed first byte
         if vch[0] != constants.net.WIF_PREFIX:
-            raise BitcoinException('invalid prefix ({}) for WIF key (2)'.format(vch[0]))
+            raise SyscoinException('invalid prefix ({}) for WIF key (2)'.format(vch[0]))
 
     if len(vch) not in [33, 34]:
-        raise BitcoinException('invalid vch len for WIF key: {}'.format(len(vch)))
+        raise SyscoinException('invalid vch len for WIF key: {}'.format(len(vch)))
     compressed = len(vch) == 34
     secret_bytes = vch[1:33]
     # we accept secrets outside curve range; cast into range here:
@@ -514,7 +514,7 @@ def is_minikey(text):
     # permits any length of 20 or more provided the minikey is valid.
     # A valid minikey must begin with an 'S', be in base58, and when
     # suffixed with '?' have its SHA256 hash begin with a zero byte.
-    # They are widely used in Casascius physical bitcoins.
+    # They are widely used in Casascius physical syscoins.
     return (len(text) >= 20 and text[0] == 'S'
             and all(ord(c) in __b58chars for c in text)
             and sha256(text + '?')[0] == 0x00)
@@ -562,7 +562,7 @@ def _CKD_priv(k, c, s, is_prime):
     try:
         keypair = ecc.ECPrivkey(k)
     except ecc.InvalidECPointException as e:
-        raise BitcoinException('Impossible xprv (not within curve order)') from e
+        raise SyscoinException('Impossible xprv (not within curve order)') from e
     cK = keypair.get_public_key_bytes(compressed=True)
     data = bytes([0]) + k + s if is_prime else cK + s
     I = hmac_oneshot(c, data, hashlib.sha512)
@@ -613,7 +613,7 @@ def xpub_header(xtype, *, net=None):
 def serialize_xprv(xtype, c, k, depth=0, fingerprint=b'\x00'*4,
                    child_number=b'\x00'*4, *, net=None):
     if not ecc.is_secret_within_curve_range(k):
-        raise BitcoinException('Impossible xprv (not within curve order)')
+        raise SyscoinException('Impossible xprv (not within curve order)')
     xprv = xprv_header(xtype, net=net) \
            + bytes([depth]) + fingerprint + child_number + c + bytes([0]) + k
     return EncodeBase58Check(xprv)
@@ -631,7 +631,7 @@ def deserialize_xkey(xkey, prv, *, net=None):
         net = constants.net
     xkey = DecodeBase58Check(xkey)
     if len(xkey) != 78:
-        raise BitcoinException('Invalid length for extended key: {}'
+        raise SyscoinException('Invalid length for extended key: {}'
                                .format(len(xkey)))
     depth = xkey[4]
     fingerprint = xkey[5:9]
@@ -640,13 +640,13 @@ def deserialize_xkey(xkey, prv, *, net=None):
     header = int('0x' + bh2u(xkey[0:4]), 16)
     headers = net.XPRV_HEADERS if prv else net.XPUB_HEADERS
     if header not in headers.values():
-        raise BitcoinException('Invalid extended key format: {}'
+        raise SyscoinException('Invalid extended key format: {}'
                                .format(hex(header)))
     xtype = list(headers.keys())[list(headers.values()).index(header)]
     n = 33 if prv else 32
     K_or_k = xkey[13+n:]
     if prv and not ecc.is_secret_within_curve_range(K_or_k):
-        raise BitcoinException('Impossible xprv (not within curve order)')
+        raise SyscoinException('Impossible xprv (not within curve order)')
     return xtype, depth, fingerprint, child_number, c, K_or_k
 
 
@@ -683,7 +683,7 @@ def xpub_from_xprv(xprv):
 
 
 def bip32_root(seed, xtype):
-    I = hmac_oneshot(b"Bitcoin seed", seed, hashlib.sha512)
+    I = hmac_oneshot(b"Syscoin seed", seed, hashlib.sha512)
     master_k = I[0:32]
     master_c = I[32:]
     # create xprv first, as that will check if master_k is within curve order
