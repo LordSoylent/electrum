@@ -639,7 +639,7 @@ class Transaction:
             self.raw = self.serialize()
         return self.raw
 
-     def __init__(self, raw, expect_trailing_data=False, raw_bytes=None, expect_trailing_bytes=False, copy_input=True, start_position=0):
+    def __init__(self, raw, expect_trailing_data=False, raw_bytes=None, expect_trailing_bytes=False, copy_input=True, start_position=0):
         if raw is None:
             self.raw = None
             self.raw_bytes = raw_bytes
