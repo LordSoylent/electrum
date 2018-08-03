@@ -199,7 +199,7 @@ class Blockchain(util.PrintError):
 
     def verify_chunk(self, index, data):
         stripped = bytearray()
-		start_position = 0
+        start_position = 0
         prev_hash = self.get_hash(index * 2016 - 1)
         chunk_headers = {'empty': True}
         i = 0
