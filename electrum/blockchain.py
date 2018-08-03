@@ -206,9 +206,9 @@ class Blockchain(util.PrintError):
         while start_position < len(data):
             # Strip auxpow header for disk
             stripped.extend(data[start_position:start_position+80])
-			height = index * 2016 + i
+            height = index * 2016 + i
             header, start_position = deserialize_header(data, height, expect_trailing_data=True, start_position=start_position)
-			target = self.get_target(height, chunk_headers)
+            target = self.get_target(height, chunk_headers)
             self.verify_header(header, prev_hash, target)
            
             chunk_headers[height] = header
@@ -217,8 +217,7 @@ class Blockchain(util.PrintError):
                 chunk_headers['empty'] = False
             chunk_headers['max_height'] = height
             i = i + 1
-			prev_hash = hash_header(header)
-
+            prev_hash = hash_header(header)
         return bytes(stripped)
 
 
