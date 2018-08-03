@@ -348,11 +348,11 @@ class Blockchain(util.PrintError):
         else:
             return hash_header(self.read_header(height))
 
-	def get_target(self, height, chunk_headers=None):
+    def get_target(self, height, chunk_headers=None):
         if chunk_headers is None:
             chunk_headers = {'empty': True}
-		if height <= 1000:
-			return REGTEST_MAX_TARGET;
+        if height <= 1000:
+            return REGTEST_MAX_TARGET;
         if height >= POW_DGW3_HEIGHT:
             return self.get_target_dgw_v3(height, chunk_headers)
         else:
@@ -365,7 +365,6 @@ class Blockchain(util.PrintError):
             chunk_empty = False
             min_height = chunk_headers['min_height']
             max_height = chunk_headers['max_height']
-
         count_blocks = 1
         while count_blocks <= DGW_PAST_BLOCKS:
             reading_h = height - count_blocks
